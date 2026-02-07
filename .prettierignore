@@ -1,0 +1,7 @@
+dist
+dist-electron
+out-tsc
+.angular
+coverage
+node_modules
+pnpm-lock.yaml

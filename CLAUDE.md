@@ -29,6 +29,10 @@ pnpm build                # プロダクションビルド（Angular）
 pnpm electron:build       # Electron TypeScript のコンパイル
 pnpm electron:serve       # ビルドして Electron アプリを起動
 pnpm package              # フルプロダクションパッケージ（Angular + Electron + electron-builder）
+pnpm lint                 # ESLint 実行
+pnpm lint:fix             # ESLint 自動修正
+pnpm format               # Prettier フォーマット実行
+pnpm format:check         # Prettier フォーマットチェック（CI 用）
 ```
 
 ## コードスタイル
@@ -36,13 +40,15 @@ pnpm package              # フルプロダクションパッケージ（Angular
 - インデントはスペース 2 つ
 - TypeScript ではシングルクォートを使用
 - UTF-8 エンコーディング、LF 改行
-- Angular HTML テンプレート用に Prettier を設定済み（`package.json` 参照）
+- Prettier を設定済み（`.prettierrc` 参照）
 - EditorConfig を適用（`.editorconfig`）
-- ESLint は未設定
+- ESLint を設定済み（`eslint.config.mjs` 参照、strict + stylistic ルールセット）
+- ESLint と Prettier の統合: `eslint-config-prettier` で競合ルールを無効化
 
 ## TypeScript 設定
 
 strict モードを完全に有効化:
+
 - `strict`, `noImplicitReturns`, `noImplicitOverride`, `noFallthroughCasesInSwitch`
 - Angular strict テンプレート: `strictTemplates`, `strictInjectionParameters`, `strictInputAccessModifiers`, `typeCheckHostBindings`
 

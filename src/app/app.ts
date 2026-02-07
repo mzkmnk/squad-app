@@ -3,7 +3,7 @@ import { Component, signal } from '@angular/core';
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
 export class App {
   protected readonly title = signal('squad-app');
@@ -13,6 +13,6 @@ export class App {
   // test code
   async testIPC() {
     const response = await window.electronAPI.ping();
-    this.message.set(response)
+    this.message.set(response);
   }
 }
