@@ -1,12 +1,13 @@
 {
   "name": "squad-app",
   "version": "0.0.0",
+  "main": "dist-electron/main.js",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "electron:build": "tsc -p electron/tsconfig.json",
+    "electron:serve": "pnpm electron:build && electron .",
+    "package": "pnpm build && pnpm electron:build && electron-builder"
   },
   "prettier": {
     "overrides": [
@@ -26,6 +27,10 @@
     "@angular/forms": "^20.1.0",
     "@angular/platform-browser": "^20.1.0",
     "@angular/router": "^20.1.0",
+    "@types/node": "^25.2.1",
+    "concurrently": "^9.2.1",
+    "electron": "^40.2.1",
+    "electron-builder": "^26.7.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
