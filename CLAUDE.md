@@ -2,13 +2,13 @@
 
 ## プロジェクト概要
 
-SquadApp — Angular 20 + Electron 40 による型安全な IPC 通信を備えたデスクトップアプリケーション。
+SquadApp — Angular 21 + Electron 40 による型安全な IPC 通信を備えたデスクトップアプリケーション。
 
 ## 技術スタック
 
-- **フロントエンド**: Angular 20（スタンドアロンコンポーネント、ゾーンレス変更検知、シグナル）
+- **フロントエンド**: Angular 21（スタンドアロンコンポーネント、ゾーンレス変更検知、シグナル）
 - **デスクトップ**: Electron 40（contextBridge IPC）
-- **言語**: TypeScript 5.8（strict モード）
+- **言語**: TypeScript 5.9（strict モード）
 - **パッケージマネージャー**: pnpm
 
 ## プロジェクト構成
@@ -24,7 +24,7 @@ public/        # 静的アセット
 ```bash
 pnpm install              # 依存関係のインストール
 ng serve                  # Angular 開発サーバー起動（localhost:4200）
-ng test                   # Karma/Jasmine ユニットテスト実行
+ng test                   # Vitest ユニットテスト実行
 pnpm build                # プロダクションビルド（Angular）
 pnpm electron:build       # Electron TypeScript のコンパイル
 pnpm electron:serve       # ビルドして Electron アプリを起動
@@ -48,7 +48,8 @@ strict モードを完全に有効化:
 
 ## テスト
 
-- **フレームワーク**: Karma + Jasmine
+- **フレームワーク**: Vitest（happy-dom 使用）
+- **ビルダー**: `@angular/build:unit-test`
 - **実行**: `ng test`
 - **テストファイル**: ソースファイルと同じディレクトリに `*.spec.ts` として配置
 
