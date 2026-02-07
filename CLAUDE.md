@@ -2,13 +2,13 @@
 
 ## Project Overview
 
-SquadApp — Angular 20 + Electron 40 desktop application with type-safe IPC communication.
+SquadApp — Angular 21 + Electron 40 desktop application with type-safe IPC communication.
 
 ## Tech Stack
 
-- **Frontend**: Angular 20 (standalone components, zoneless change detection, signals)
+- **Frontend**: Angular 21 (standalone components, zoneless change detection, signals)
 - **Desktop**: Electron 40 with contextBridge IPC
-- **Language**: TypeScript 5.8 (strict mode)
+- **Language**: TypeScript 5.9 (strict mode)
 - **Package Manager**: pnpm
 
 ## Project Structure
@@ -24,7 +24,7 @@ public/        # Static assets
 ```bash
 pnpm install              # Install dependencies
 ng serve                  # Start Angular dev server (localhost:4200)
-ng test                   # Run Karma/Jasmine unit tests
+ng test                   # Run Vitest unit tests
 pnpm build                # Production build (Angular)
 pnpm electron:build       # Compile Electron TypeScript
 pnpm electron:serve       # Build and launch Electron app
@@ -48,7 +48,8 @@ Strict mode is fully enabled:
 
 ## Testing
 
-- **Framework**: Karma + Jasmine
+- **Framework**: Vitest (with happy-dom)
+- **Builder**: `@angular/build:unit-test`
 - **Run**: `ng test`
 - **Test files**: co-located as `*.spec.ts` alongside source files
 
