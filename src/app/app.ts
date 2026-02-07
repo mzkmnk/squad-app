@@ -12,7 +12,7 @@ export class App {
 
   // test code
   async testIPC() {
-    const response = await (window as any).electronAPI.ping();
+    const response = await window.electronAPI.ping();
     this.message.set(response)
   }
 }
