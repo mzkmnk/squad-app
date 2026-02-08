@@ -45,7 +45,12 @@ async function createWindow() {
   });
 }
 
-app.on('ready', () => void createWindow());
+app.on('ready', () => {
+  createWindow().catch((error: unknown) => {
+    console.error('Failed to create window:', error);
+    app.quit();
+  });
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -55,7 +60,9 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    void createWindow();
+    createWindow().catch((error: unknown) => {
+      console.error('Failed to create window:', error);
+    });
   }
 });
 

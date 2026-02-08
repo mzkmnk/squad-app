@@ -13,33 +13,8 @@
  * @see {@link electron/ipc/ipc-channels.ts} IPC チャネル名定数・リクエスト型
  */
 
-import type { Repository, Workspace } from './types/models.js';
-
-/**
- * 全 IPC レスポンスの統一ラッパー型。
- *
- * @remarks
- * Discriminated Union パターンにより、`success` フィールドで型の絞り込みが可能。
- * IPC 通信ではメインプロセスの例外がレンダラーに伝播しないため、
- * エラーを明示的にシリアライズして返す必要がある。
- *
- * @typeParam T - 成功時に返されるデータの型
- *
- * @example
- * ```typescript
- * const result: IpcResult<Repository[]> = await window.electronAPI.getRepositories();
- * if (result.success) {
- *   // result.data は Repository[] に型推論される
- *   console.log(result.data);
- * } else {
- *   // result.error は { code: string; message: string } に型推論される
- *   console.error(result.error.code, result.error.message);
- * }
- * ```
- */
-export type IpcResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: { code: string; message: string } };
+import type { Repository, Workspace } from './models.js';
+import type { IpcResult } from './ipc-result.js';
 
 /**
  * `contextBridge.exposeInMainWorld` で `window.electronAPI` に公開される API の型定義。
@@ -208,6 +183,9 @@ export interface ElectronAPI {
    *
    * @param id - 開く対象の Workspace UUID
    * @returns 成功時は `data: null` の IpcResult
+   *
+   * @throws NOT_FOUND - 指定 ID の Workspace が存在しない場合
+   * @throws INTERNAL_ERROR - `code` コマンドの実行に失敗した場合
    */
   openWorkspace: (id: string) => Promise<IpcResult<null>>;
 }

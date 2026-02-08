@@ -57,29 +57,7 @@ export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
 
 // --- レスポンスラッパー ---
 
-/**
- * 全 IPC レスポンスの統一ラッパー型。
- *
- * @remarks
- * Discriminated Union パターンにより、`success` フィールドで型の絞り込みが可能。
- * IPC 通信ではメインプロセスの例外がレンダラーに伝播しないため、
- * エラーを明示的にシリアライズして返す必要がある。
- *
- * @typeParam T - 成功時に返されるデータの型
- *
- * @example
- * ```typescript
- * const result: IpcResult<Repository[]> = await window.electronAPI.getRepositories();
- * if (result.success) {
- *   console.log(result.data); // Repository[]
- * } else {
- *   console.error(result.error.code, result.error.message);
- * }
- * ```
- */
-export type IpcResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: { code: string; message: string } };
+export type { IpcResult } from '../types/ipc-result.js';
 
 // --- エラーコード ---
 
@@ -99,8 +77,6 @@ export const IpcErrorCode = {
   GIT_OPERATION_FAILED: 'GIT_OPERATION_FAILED',
   /** 指定された ID のリソースが見つからない */
   NOT_FOUND: 'NOT_FOUND',
-  /** 同名 Workspace の重複が最大リトライ回数後も解決しない */
-  DUPLICATE_WORKSPACE_ERROR: 'DUPLICATE_WORKSPACE_ERROR',
   /** 予期しないエラー。上記に該当しない全ての例外がマッピングされる */
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;

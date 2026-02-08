@@ -233,7 +233,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
    *
    * @throws NOT_FOUND - entries 内の repositoryId が存在しない場合
    * @throws VALIDATION_ERROR - ブランチ名が不正な場合
-   * @throws DUPLICATE_WORKSPACE_ERROR - 3回リトライ後も重複が解決しない場合
    * @throws GIT_OPERATION_FAILED - Worktree 作成に失敗した場合
    *
    * @example
@@ -288,7 +287,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
    * @returns 成功時は `data: null` の IpcResult
    *
    * @throws NOT_FOUND - 指定 ID の Workspace が存在しない場合
-   * @throws GIT_OPERATION_FAILED - `code` コマンドの実行に失敗した場合
+   * @throws INTERNAL_ERROR - `code` コマンドの実行に失敗した場合
    *
    * @example
    * ```typescript
