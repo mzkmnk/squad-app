@@ -1,12 +1,27 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SquadStore } from './store/squad-store.js';
+import { createSquadPaths } from './store/squad-paths.js';
+import { GitService } from './git/git-service.js';
+import { CodeWorkspaceService } from './git/code-workspace-service.js';
+import { registerIpcHandlers } from './ipc/ipc-handlers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null;
 
-function createWindow() {
+async function createWindow() {
+  // サービス初期化
+  const paths = createSquadPaths();
+  const store = new SquadStore();
+  await store.initialize();
+  const gitService = new GitService(paths);
+  const codeWorkspaceService = new CodeWorkspaceService(paths);
+
+  // IPC ハンドラー登録
+  registerIpcHandlers({ store, gitService, codeWorkspaceService, paths });
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -30,7 +45,7 @@ function createWindow() {
   });
 }
 
-app.on('ready', createWindow);
+app.on('ready', () => void createWindow());
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -40,7 +55,7 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    createWindow();
+    void createWindow();
   }
 });
 

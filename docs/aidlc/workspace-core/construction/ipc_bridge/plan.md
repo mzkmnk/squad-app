@@ -72,15 +72,15 @@ Electron IPC 通信基盤を構築する。チャネル定義・エラーマッ�
 
 ### 6. main.ts 統合
 
-- [ ] サービス初期化（SquadPaths, SquadStore, GitService, CodeWorkspaceService）
-- [ ] `registerIpcHandlers` 呼び出し追加
-- [ ] `createWindow` を async 化
+- [x] サービス初期化（SquadPaths, SquadStore, GitService, CodeWorkspaceService）
+- [x] `registerIpcHandlers` 呼び出し追加
+- [x] `createWindow` を async 化
 
 ### 7. 最終確認
 
-- [ ] 全テスト実行・パス確認
-- [ ] lint・format 確認
-- [ ] ビルド確認
+- [x] 全テスト実行・パス確認
+- [x] lint・format 確認
+- [x] ビルド確認
 
 ## 更新履歴
 
