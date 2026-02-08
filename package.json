@@ -6,7 +6,7 @@
   "scripts": {
     "ng": "ng",
     "build": "ng build",
-    "electron:build": "tsc -p electron/tsconfig.json",
+    "electron:build": "tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json",
     "electron:serve": "pnpm electron:build && electron .",
     "package": "pnpm build && pnpm electron:build && electron-builder",
     "lint": "eslint .",
