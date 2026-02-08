@@ -27,38 +27,38 @@ Electron IPC 通信基盤を構築する。チャネル定義・エラーマッ�
 
 ### 3. IPC ハンドラー (`electron/ipc/ipc-handlers.ts`)
 
-- [ ] `extractRepoName` ユーティリティ関数
-- [ ] `IpcHandlerDeps` インターフェース定義
-- [ ] `registerIpcHandlers` 関数の骨格
-- [ ] テスト: `extractRepoName` — HTTPS URL, SSH URL, `.git` なし, 深いパス
+- [x] `extractRepoName` ユーティリティ関数
+- [x] `IpcHandlerDeps` インターフェース定義
+- [x] `registerIpcHandlers` 関数の骨格
+- [x] テスト: `extractRepoName` — HTTPS URL, SSH URL, `.git` なし, 深いパス
 
 #### 3a. リポジトリ操作ハンドラー
 
-- [ ] `repo:list` ハンドラー実装
-- [ ] テスト: 正常系 / ストアエラー時 `INTERNAL_ERROR`
-- [ ] `repo:get` ハンドラー実装
-- [ ] テスト: 存在する ID / 存在しない ID → `NOT_FOUND`
-- [ ] `repo:add` ハンドラー実装（URL 抽出 → cloneBare → addRepository）
-- [ ] テスト: 正常系 / `VALIDATION_ERROR` / `REPOSITORY_EXISTS` / `GIT_OPERATION_FAILED` / cloneBare 成功後 addRepository 失敗時のクリーンアップ
-- [ ] `repo:remove` ハンドラー実装
-- [ ] テスト: 正常系 / `NOT_FOUND`
-- [ ] `repo:branches` ハンドラー実装
-- [ ] テスト: 正常系 / `NOT_FOUND` / `GIT_OPERATION_FAILED`
-- [ ] `repo:fetch` ハンドラー実装
-- [ ] テスト: 正常系 / `NOT_FOUND`
+- [x] `repo:list` ハンドラー実装
+- [x] テスト: 正常系 / ストアエラー時 `INTERNAL_ERROR`
+- [x] `repo:get` ハンドラー実装
+- [x] テスト: 存在する ID / 存在しない ID → `NOT_FOUND`
+- [x] `repo:add` ハンドラー実装（URL 抽出 → cloneBare → addRepository）
+- [x] テスト: 正常系 / `VALIDATION_ERROR` / `REPOSITORY_EXISTS` / `GIT_OPERATION_FAILED` / cloneBare 成功後 addRepository 失敗時のクリーンアップ
+- [x] `repo:remove` ハンドラー実装
+- [x] テスト: 正常系 / `NOT_FOUND`
+- [x] `repo:branches` ハンドラー実装
+- [x] テスト: 正常系 / `NOT_FOUND` / `GIT_OPERATION_FAILED`
+- [x] `repo:fetch` ハンドラー実装
+- [x] テスト: 正常系 / `NOT_FOUND`
 
 #### 3b. Workspace 操作ハンドラー
 
-- [ ] `workspace:list` ハンドラー実装
-- [ ] テスト: 正常系
-- [ ] `workspace:get` ハンドラー実装
-- [ ] テスト: 存在する ID / `NOT_FOUND`
-- [ ] `workspace:create` ハンドラー実装（リポジトリ解決 → Worktree 作成 → .code-workspace 生成 → ストア登録 → VS Code 起動 + ロールバック処理）
-- [ ] テスト: 正常系フロー / 存在しない repositoryId → `NOT_FOUND` / Worktree 作成途中エラー時のロールバック / ロールバック中エラーは無視
-- [ ] `workspace:delete` ハンドラー実装
-- [ ] テスト: 正常系 / `NOT_FOUND` / 一部 Worktree 削除失敗でも継続
-- [ ] `workspace:open` ハンドラー実装
-- [ ] テスト: 正常系 / `NOT_FOUND` / `code` コマンド失敗
+- [x] `workspace:list` ハンドラー実装
+- [x] テスト: 正常系
+- [x] `workspace:get` ハンドラー実装
+- [x] テスト: 存在する ID / `NOT_FOUND`
+- [x] `workspace:create` ハンドラー実装（リポジトリ解決 → Worktree 作成 → .code-workspace 生成 → ストア登録 → VS Code 起動 + ロールバック処理）
+- [x] テスト: 正常系フロー / 存在しない repositoryId → `NOT_FOUND` / Worktree 作成途中エラー時のロールバック / ロールバック中エラーは無視
+- [x] `workspace:delete` ハンドラー実装
+- [x] テスト: 正常系 / `NOT_FOUND` / 一部 Worktree 削除失敗でも継続
+- [x] `workspace:open` ハンドラー実装
+- [x] テスト: 正常系 / `NOT_FOUND` / `code` コマンド失敗
 
 ### 4. preload API 拡張 (`electron/preload.ts`)
 
