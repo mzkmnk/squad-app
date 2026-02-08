@@ -8,10 +8,10 @@ Electron IPC 通信基盤を構築する。チャネル定義・エラーマッ�
 
 ### 1. IPC チャネル定義 (`electron/ipc/ipc-channels.ts`)
 
-- [ ] チャネル名定数 `IpcChannels` を定義
-- [ ] `IpcResult<T>` Discriminated Union 型を定義
-- [ ] `IpcErrorCode` 定数を定義
-- [ ] リクエスト型（`RepoGetRequest`, `RepoAddRequest`, etc.）を定義
+- [x] チャネル名定数 `IpcChannels` を定義
+- [x] `IpcResult<T>` Discriminated Union 型を定義
+- [x] `IpcErrorCode` 定数を定義
+- [x] リクエスト型（`RepoGetRequest`, `RepoAddRequest`, etc.）を定義
 
 ### 2. エラーマッパー (`electron/ipc/ipc-error-mapper.ts`)
 
