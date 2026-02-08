@@ -15,15 +15,15 @@ Electron IPC 通信基盤を構築する。チャネル定義・エラーマッ�
 
 ### 2. エラーマッパー (`electron/ipc/ipc-error-mapper.ts`)
 
-- [ ] `mapErrorToIpcResult` — 例外を `IpcResult` 失敗形式に変換
-- [ ] `notFoundResult` — NOT_FOUND エラー生成ヘルパー
-- [ ] `successResult` — 成功レスポンス生成ヘルパー
-- [ ] テスト: `GitValidationError` → `VALIDATION_ERROR`
-- [ ] テスト: `GitRepositoryExistsError` → `REPOSITORY_EXISTS`
-- [ ] テスト: `GitOperationError` → `GIT_OPERATION_FAILED`（stderr 優先 / message フォールバック）
-- [ ] テスト: 未知の Error → `INTERNAL_ERROR`
-- [ ] テスト: Error でないオブジェクト → `INTERNAL_ERROR` + `'Unknown error'`
-- [ ] テスト: `notFoundResult` / `successResult` の形式検証
+- [x] `mapErrorToIpcResult` — 例外を `IpcResult` 失敗形式に変換
+- [x] `notFoundResult` — NOT_FOUND エラー生成ヘルパー
+- [x] `successResult` — 成功レスポンス生成ヘルパー
+- [x] テスト: `GitValidationError` → `VALIDATION_ERROR`
+- [x] テスト: `GitRepositoryExistsError` → `REPOSITORY_EXISTS`
+- [x] テスト: `GitOperationError` → `GIT_OPERATION_FAILED`（stderr 優先 / message フォールバック）
+- [x] テスト: 未知の Error → `INTERNAL_ERROR`
+- [x] テスト: Error でないオブジェクト → `INTERNAL_ERROR` + `'Unknown error'`
+- [x] テスト: `notFoundResult` / `successResult` の形式検証
 
 ### 3. IPC ハンドラー (`electron/ipc/ipc-handlers.ts`)
 
