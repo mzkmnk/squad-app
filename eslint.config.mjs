@@ -63,7 +63,7 @@ export default tseslint.config(
 
   // Spec files - relax some strict rules
   {
-    files: ['src/**/*.spec.ts'],
+    files: ['src/**/*.spec.ts', 'electron/**/*.spec.ts'],
     rules: {
       '@typescript-eslint/unbound-method': 'off',
     },
