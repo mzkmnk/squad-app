@@ -62,13 +62,13 @@ Electron IPC 通信基盤を構築する。チャネル定義・エラーマッ�
 
 ### 4. preload API 拡張 (`electron/preload.ts`)
 
-- [ ] リポジトリ操作メソッド追加（getRepositories, getRepository, addRepository, removeRepository, getRemoteBranches, fetchRepository）
-- [ ] Workspace 操作メソッド追加（getWorkspaces, getWorkspace, createWorkspace, deleteWorkspace, openWorkspace）
+- [x] リポジトリ操作メソッド追加（getRepositories, getRepository, addRepository, removeRepository, getRemoteBranches, fetchRepository）
+- [x] Workspace 操作メソッド追加（getWorkspaces, getWorkspace, createWorkspace, deleteWorkspace, openWorkspace）
 
 ### 5. 型定義拡張 (`electron/electron.d.ts`)
 
-- [ ] `IpcResult<T>` 型定義追加
-- [ ] `ElectronAPI` インターフェースに全 IPC メソッドの型を追加
+- [x] `IpcResult<T>` 型定義追加
+- [x] `ElectronAPI` インターフェースに全 IPC メソッドの型を追加
 
 ### 6. main.ts 統合
 
