@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import type { Repository, Workspace, ReposConfig, WorkspacesConfig } from '../types/models.js';
+import { reposConfigSchema, workspacesConfigSchema } from '../types/models.js';
 import { createSquadPaths, type SquadPaths } from './squad-paths.js';
 
 const CURRENT_VERSION = 1;
@@ -201,7 +202,7 @@ export class SquadStore {
 
   private async readReposConfig(): Promise<{ version: number; repositories: Repository[] }> {
     const raw = await fs.readFile(this.paths.reposConfig, 'utf-8');
-    const config = JSON.parse(raw) as ReposConfig;
+    const config = reposConfigSchema.parse(JSON.parse(raw));
     if (config.version !== CURRENT_VERSION) {
       throw new Error(
         `Unsupported repos.json version: ${String(config.version)}. Expected version ${String(CURRENT_VERSION)}.`,
@@ -215,7 +216,7 @@ export class SquadStore {
     workspaces: Workspace[];
   }> {
     const raw = await fs.readFile(this.paths.workspacesConfig, 'utf-8');
-    const config = JSON.parse(raw) as WorkspacesConfig;
+    const config = workspacesConfigSchema.parse(JSON.parse(raw));
     if (config.version !== CURRENT_VERSION) {
       throw new Error(
         `Unsupported workspaces.json version: ${String(config.version)}. Expected version ${String(CURRENT_VERSION)}.`,
