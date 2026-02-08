@@ -14,7 +14,7 @@
     "format": "prettier --write \"src/**/*.{ts,html,css}\" \"electron/**/*.ts\" \"*.{json,md,js,mjs}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,css}\" \"electron/**/*.ts\" \"*.{json,md,js,mjs}\"",
     "test": "pnpm test:ng && pnpm test:electron",
-    "test:ng": "ng test",
+    "test:ng": "ng test --no-watch",
     "test:electron": "pnpm exec vitest run electron/ --exclude 'dist-electron/**'",
     "prepare": "husky"
   },
