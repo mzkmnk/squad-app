@@ -50,3 +50,16 @@ Git CLI をラップした `GitService`、入力バリデーションの `git-va
 - [x] lint 確認（`pnpm lint`）
 - [x] format 確認（`pnpm format:check`）
 - [x] Electron ビルド確認（`pnpm electron:build`）
+
+### 6. 同名リソースの重複対応（UUID 先頭8文字 suffix）
+
+各メソッドが独立して UUID v4 先頭8文字の suffix を生成し、リポジトリ名・Workspace 名・ブランチ名に付与する。重複時は新しい UUID で最大3回リトライし、解決しなければエラーを返す。
+
+- [ ] 実装: `GitService.cloneBare` の変更 — suffix 付きリポジトリ名（`repoName-<suffix>`）+ 3回リトライ
+- [ ] 実装: `GitService.addWorktree` の変更 — suffix 付きローカルブランチ作成（`git branch <branch>-<suffix> <branch>` → `git worktree add`）+ 3回リトライ
+- [ ] 実装: `SquadStore.addWorkspace` の変更 — suffix 付き Workspace 名（`name-<suffix>`）+ 3回リトライ
+- [ ] テスト: `cloneBare` — suffix 付き名前で Bare Repository が作成される、3回リトライ後にエラー
+- [ ] テスト: `addWorktree` — suffix 付きブランチで worktree が作成される、3回リトライ後にエラー
+- [ ] テスト: `addWorkspace` — suffix 付き名前で保存される、3回リトライ後にエラー
+- [ ] テスト全パス確認
+- [ ] lint / format 確認
