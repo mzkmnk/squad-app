@@ -13,6 +13,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,html,css}\" \"electron/**/*.ts\" \"*.{json,md,js,mjs}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,css}\" \"electron/**/*.ts\" \"*.{json,md,js,mjs}\"",
+    "test": "pnpm test:ng && pnpm test:electron",
+    "test:ng": "ng test",
+    "test:electron": "pnpm exec vitest run electron/ --exclude 'dist-electron/**'",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -35,6 +38,7 @@
       "prettier --write"
     ]
   },
+  "type": "module",
   "private": true,
   "dependencies": {
     "@angular/common": "^21.1.3",
