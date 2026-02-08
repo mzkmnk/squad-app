@@ -97,6 +97,7 @@ export class GitService {
       .split('\n')
       .filter((line) => line.length > 0)
       .filter((line) => !line.endsWith('/HEAD'))
+      .filter((line) => line.includes('/'))
       .map((line) => line.replace(/^origin\//, ''));
   }
 

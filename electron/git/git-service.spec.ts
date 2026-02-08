@@ -21,7 +21,7 @@ let service: GitService;
  */
 async function createLocalRemote(dir: string): Promise<void> {
   await fs.mkdir(dir, { recursive: true });
-  await execFileAsync('git', ['init', '--bare'], { cwd: dir });
+  await execFileAsync('git', ['init', '--bare', '--initial-branch=main'], { cwd: dir });
 
   const workDir = path.join(dir, '..', 'work-tmp');
   await fs.mkdir(workDir, { recursive: true });
@@ -268,7 +268,7 @@ describe('GitService - getRemoteBranches', () => {
     // 空の bare リポジトリを作成（コミットなし）
     const emptyRemote = path.join(tmpDir, 'empty-remote.git');
     await fs.mkdir(emptyRemote, { recursive: true });
-    await execFileAsync('git', ['init', '--bare'], { cwd: emptyRemote });
+    await execFileAsync('git', ['init', '--bare', '--initial-branch=main'], { cwd: emptyRemote });
 
     // 空リモートを直接 clone --bare
     const repoDir = paths.repoDir('empty-repo');
