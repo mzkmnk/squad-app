@@ -4,37 +4,46 @@ import * as fs from 'node:fs/promises';
 import type { SquadPaths } from '../store/squad-paths.js';
 import { validateRemoteUrl, validateBranchName, validateRepoName } from './git-validation.js';
 import { GitOperationError, GitRepositoryExistsError } from './git-errors.js';
+import { generateSuffix, appendSuffix, MAX_SUFFIX_RETRY } from './uuid-suffix.js';
 
 const execFileAsync = promisify(execFile);
 
 export class GitService {
   constructor(private readonly paths: SquadPaths) {}
 
-  /** Bare Repository をクローンする */
-  async cloneBare(remoteUrl: string, repoName: string): Promise<void> {
+  /** Bare Repository をクローンする。suffix 付きリポジトリ名を返す */
+  async cloneBare(remoteUrl: string, repoName: string): Promise<string> {
     validateRemoteUrl(remoteUrl);
     validateRepoName(repoName);
 
-    const repoDir = this.paths.repoDir(repoName);
+    for (let attempt = 0; attempt < MAX_SUFFIX_RETRY; attempt++) {
+      const suffix = generateSuffix();
+      const actualName = appendSuffix(repoName, suffix);
+      const repoDir = this.paths.repoDir(actualName);
 
-    const exists = await fs
-      .stat(repoDir)
-      .then(() => true)
-      .catch(() => false);
+      const exists = await fs
+        .stat(repoDir)
+        .then(() => true)
+        .catch(() => false);
 
-    if (exists) {
-      throw new GitRepositoryExistsError(repoName);
+      if (exists) {
+        continue;
+      }
+
+      await this.execGit(['clone', '--bare', remoteUrl, repoDir]);
+
+      // bare clone は fetch refspec を設定しないため、手動で追加する。
+      // これにより git fetch が refs/remotes/origin/* にマッピングされ、
+      // git branch -r でリモートブランチ一覧が取得可能になる。
+      await this.execGit(
+        ['config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
+        repoDir,
+      );
+
+      return actualName;
     }
 
-    await this.execGit(['clone', '--bare', remoteUrl, repoDir]);
-
-    // bare clone は fetch refspec を設定しないため、手動で追加する。
-    // これにより git fetch が refs/remotes/origin/* にマッピングされ、
-    // git branch -r でリモートブランチ一覧が取得可能になる。
-    await this.execGit(
-      ['config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*'],
-      repoDir,
-    );
+    throw new GitRepositoryExistsError(repoName);
   }
 
   /** Bare Repository をディスクから削除する */
@@ -44,8 +53,8 @@ export class GitService {
     await fs.rm(repoDir, { recursive: true, force: true });
   }
 
-  /** 指定ブランチの Worktree を作成する */
-  async addWorktree(repoName: string, workspaceName: string, branch: string): Promise<void> {
+  /** 指定ブランチの Worktree を作成する。suffix 付きブランチ名を返す */
+  async addWorktree(repoName: string, workspaceName: string, branch: string): Promise<string> {
     validateBranchName(branch);
 
     const repoDir = this.paths.repoDir(repoName);
@@ -54,7 +63,28 @@ export class GitService {
     // Workspace ディレクトリを自動作成
     await fs.mkdir(this.paths.workspaceDir(workspaceName), { recursive: true });
 
-    await this.execGit(['worktree', 'add', worktreeDir, branch], repoDir);
+    for (let attempt = 0; attempt < MAX_SUFFIX_RETRY; attempt++) {
+      const suffix = generateSuffix();
+      const actualBranch = appendSuffix(branch, suffix);
+
+      try {
+        // suffix 付きローカルブランチを作成（元ブランチから分岐）
+        await this.execGit(['branch', actualBranch, branch], repoDir);
+      } catch {
+        // ブランチ名が重複した場合はリトライ
+        continue;
+      }
+
+      // 作成したブランチで worktree を追加
+      await this.execGit(['worktree', 'add', worktreeDir, actualBranch], repoDir);
+      return actualBranch;
+    }
+
+    throw new GitOperationError(
+      `Failed to create worktree after ${String(MAX_SUFFIX_RETRY)} retries: branch '${branch}' suffix collision`,
+      null,
+      '',
+    );
   }
 
   /** Worktree を削除する */

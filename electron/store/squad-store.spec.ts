@@ -6,6 +6,7 @@ import { createSquadPaths } from './squad-paths.js';
 
 import { SquadStore } from './squad-store.js';
 import type { ReposConfig, WorkspacesConfig } from '../types/models.js';
+import * as uuidSuffix from '../git/uuid-suffix.js';
 
 let tmpDir: string;
 let store: SquadStore;
@@ -183,7 +184,8 @@ describe('SquadStore - Workspace CRUD', () => {
     expect(ws.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     expect(ws.createdAt).toBeDefined();
     expect(ws.updatedAt).toBeDefined();
-    expect(ws.name).toBe('feature-payment');
+    // suffix 付き名前（feature-payment-<8文字>）
+    expect(ws.name).toMatch(/^feature-payment-[0-9a-f]{8}$/);
     expect(ws.entries).toEqual([{ repositoryId: 'repo-1', branch: 'feature/payment' }]);
   });
 
@@ -209,12 +211,12 @@ describe('SquadStore - Workspace CRUD', () => {
   });
 
   it('getWorkspaces() で全Workspaceが取得できる', async () => {
-    await store.addWorkspace({ name: 'ws-1', entries: [] });
-    await store.addWorkspace({ name: 'ws-2', entries: [] });
+    const ws1 = await store.addWorkspace({ name: 'ws-1', entries: [] });
+    const ws2 = await store.addWorkspace({ name: 'ws-2', entries: [] });
 
     const workspaces = await store.getWorkspaces();
     expect(workspaces).toHaveLength(2);
-    expect(workspaces.map((w) => w.name)).toEqual(['ws-1', 'ws-2']);
+    expect(workspaces.map((w) => w.name)).toEqual([ws1.name, ws2.name]);
   });
 
   it('getWorkspace(id) で特定のWorkspaceが取得できる', async () => {
@@ -315,6 +317,35 @@ describe('SquadStore - Workspace CRUD', () => {
 
   it('removeWorkspace() に存在しないIDを渡してもエラーにならない', async () => {
     await expect(store.removeWorkspace('non-existent-id')).resolves.toBeUndefined();
+  });
+
+  it('addWorkspace() で3回リトライ後に全て重複した場合エラーがスローされる', async () => {
+    const spy = vi.spyOn(uuidSuffix, 'generateSuffix').mockReturnValue('cccccccc');
+
+    // 先に同名で作成しておく
+    await fs.mkdir(path.join(tmpDir, 'config'), { recursive: true });
+    const configPath = path.join(tmpDir, 'config', 'workspaces.json');
+    await fs.writeFile(
+      configPath,
+      JSON.stringify({
+        version: 1,
+        workspaces: [
+          {
+            id: 'existing-id',
+            name: 'my-ws-cccccccc',
+            entries: [],
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      }),
+    );
+
+    await expect(store.addWorkspace({ name: 'my-ws', entries: [] })).rejects.toThrow(
+      /Workspace.*already exists/,
+    );
+
+    spy.mockRestore();
   });
 });
 

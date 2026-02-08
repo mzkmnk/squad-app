@@ -458,6 +458,91 @@ export class CodeWorkspaceService {
 - `beforeEach` で一時ディレクトリを作成、`afterEach` で再帰削除
 - テスト間で状態を共有しない
 
+## 同名 Workspace・同一ブランチ Worktree の重複対応
+
+### 背景
+
+`git worktree add` は同じブランチを複数の Worktree にチェックアウトできない制約がある（`fatal: '<branch>' is already checked out`）。Workspace のコピー機能や、同じ構成の Workspace を複数作りたいユースケース（例: AI コーディングで同一環境を複製して並行実験）に対応する。
+
+### 設計方針: UUID 先頭8文字 suffix + リトライ
+
+Workspace 名、Worktree ディレクトリ名、ブランチ名の全てに対して、作成時に常に UUID v4 の先頭8文字を suffix として付与する。suffix は各メソッド（`SquadStore.addWorkspace`、`GitService.addWorktree`）が独立して生成する。suffix 付与後に重複が発生した場合は新しい UUID で最大3回までリトライし、それでも解決しない場合は重複エラーを返す。
+
+```
+# Workspace 名（SquadStore.addWorkspace が生成）
+feature-payment-a3f2b1c9
+
+# Worktree ブランチ名（GitService.addWorktree が生成）
+backend → feature/payment-7d4e9f01
+frontend → main-e2c8a4b6
+```
+
+各 suffix は独立した UUID から生成されるため、揃っている必要はない。紐づけは `SquadStore` の `entries` が保持する。
+
+### リトライフロー
+
+各メソッドが独立してリトライする:
+
+```
+SquadStore.addWorkspace:
+  1回目: feature-payment-<uuid1の先頭8文字> → 重複 → リトライ
+  2回目: feature-payment-<uuid2の先頭8文字> → 重複 → リトライ
+  3回目: feature-payment-<uuid3の先頭8文字> → 重複 → DUPLICATE_WORKSPACE_ERROR
+
+GitService.addWorktree:
+  1回目: git branch feature/payment-<uuid1の先頭8文字> → 重複 → リトライ
+  2回目: git branch feature/payment-<uuid2の先頭8文字> → 重複 → リトライ
+  3回目: git branch feature/payment-<uuid3の先頭8文字> → 重複 → GitOperationError
+```
+
+### 選定理由
+
+- 1つ目から常に suffix を付与するため、重複チェックのロジックが不要でシンプル
+- 連番方式（`-2`, `-3`）と比較して、既存一覧のスキャンが不要
+- 並行作成時の衝突リスクがない（UUID 先頭8文字 = 32bit、約43億通り）
+- 8文字なら人間が読める長さで、`git log` や `git branch` でも元との関連がわかる
+- CloudFormation のスタック名等、エンジニアに馴染みのある命名パターン
+- 3回リトライで十分な安全マージン（衝突確率は天文学的に低い）
+
+### 既存メソッドの変更
+
+#### `GitService.cloneBare(remoteUrl, repoName)`
+
+内部ロジックを変更:
+
+1. UUID v4 の先頭8文字を suffix として生成
+2. `repoName-<suffix>` を実際のリポジトリ名として使用（`~/.squad/repos/backend-a3f2b1c9.git`）
+3. ディレクトリが既に存在する場合、新しい UUID で最大3回リトライ
+4. 3回失敗したら `GitRepositoryExistsError` をスロー
+
+#### `GitService.addWorktree(repoName, workspaceName, branch)`
+
+内部ロジックを変更:
+
+1. UUID v4 の先頭8文字を suffix として生成
+2. `branch-<suffix>` で新しいローカルブランチを作成（`git branch <branch>-<suffix> <branch>`）
+3. 作成したブランチで `git worktree add` を実行
+4. ブランチ作成が重複エラーの場合、新しい UUID で最大3回リトライ
+5. 3回失敗したら `GitOperationError` をスロー
+
+#### `SquadStore.addWorkspace({ name, entries })`
+
+内部ロジックを変更:
+
+1. UUID v4 の先頭8文字を suffix として生成
+2. `name-<suffix>` を実際の Workspace 名として使用
+3. 同名が既に存在する場合、新しい UUID で最大3回リトライ
+4. 3回失敗したらエラーをスロー
+
+### 影響範囲
+
+- `GitService.cloneBare()`: suffix 付きリポジトリ名 + リトライロジックを内部に追加
+- `GitService.addWorktree()`: suffix 付きブランチ作成 + リトライロジックを内部に追加
+- `SquadStore.addWorkspace()`: suffix 付き Workspace 名 + リトライロジックを内部に追加
+- `SquadStore.addRepository()`: `cloneBare` が返す suffix 付き名前を保存する
+- `CodeWorkspaceService.generate()`: 変更なし（suffix 付き Workspace 名がそのまま渡される）
+- IPC ハンドラー（Unit 3: ipc_bridge）: ユーザー入力の生の名前をそのまま渡すだけ。suffix ロジックは関知しない
+
 ## 非機能要件
 
 ### パフォーマンス

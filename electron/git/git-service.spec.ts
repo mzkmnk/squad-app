@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as fs from 'node:fs/promises';
@@ -7,6 +7,8 @@ import * as path from 'node:path';
 import { createSquadPaths, type SquadPaths } from '../store/squad-paths.js';
 import { GitService } from './git-service.js';
 import { GitValidationError, GitOperationError, GitRepositoryExistsError } from './git-errors.js';
+import * as uuidSuffix from './uuid-suffix.js';
+import * as gitValidation from './git-validation.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -91,11 +93,16 @@ describe('GitService - cloneBare', () => {
     expect(stat.isFile()).toBe(true);
   });
 
-  it('同名リポジトリが既に存在する場合に GitRepositoryExistsError がスローされる', async () => {
-    await cloneBareForTest(paths, remoteDir, 'test-repo');
-    await expect(service.cloneBare('https://github.com/org/repo.git', 'test-repo')).rejects.toThrow(
-      GitRepositoryExistsError,
+  it('同名リポジトリが既に存在する場合でも異なる suffix で作成される', async () => {
+    // ローカルパスを使うため URL バリデーションをバイパス
+    const spy = vi.spyOn(gitValidation, 'validateRemoteUrl').mockImplementation(
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
     );
+    const name1 = await service.cloneBare(remoteDir, 'test-repo');
+    const name2 = await service.cloneBare(remoteDir, 'test-repo');
+    expect(name1).not.toBe(name2);
+    spy.mockRestore();
   });
 
   it('不正な URL の場合に GitValidationError がスローされる', async () => {
@@ -106,6 +113,23 @@ describe('GitService - cloneBare', () => {
     await expect(
       service.cloneBare('https://example.invalid/nonexistent/repo.git', 'test-repo'),
     ).rejects.toThrow(GitOperationError);
+  });
+
+  it('3回リトライ後に全て重複した場合 GitRepositoryExistsError がスローされる', async () => {
+    const urlSpy = vi.spyOn(gitValidation, 'validateRemoteUrl').mockImplementation(
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+    );
+    const suffixSpy = vi.spyOn(uuidSuffix, 'generateSuffix').mockReturnValue('aaaaaaaa');
+
+    await cloneBareForTest(paths, remoteDir, 'test-repo-aaaaaaaa');
+
+    await expect(service.cloneBare(remoteDir, 'test-repo')).rejects.toThrow(
+      GitRepositoryExistsError,
+    );
+
+    suffixSpy.mockRestore();
+    urlSpy.mockRestore();
   });
 });
 
@@ -173,6 +197,27 @@ describe('GitService - addWorktree', () => {
     await expect(
       service.addWorktree('test-repo', 'my-workspace', 'nonexistent-branch'),
     ).rejects.toThrow(GitOperationError);
+  });
+
+  it('3回リトライ後に全て重複した場合 GitOperationError がスローされる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+
+    const spy = vi.spyOn(uuidSuffix, 'generateSuffix').mockReturnValue('bbbbbbbb');
+
+    // 先に同名ブランチで worktree を作成しておく
+    const repoDir = paths.repoDir('test-repo');
+    await execFileAsync('git', ['branch', 'main-bbbbbbbb', 'main'], { cwd: repoDir });
+    await execFileAsync(
+      'git',
+      ['worktree', 'add', paths.worktreeDir('pre-existing', 'test-repo'), 'main-bbbbbbbb'],
+      { cwd: repoDir },
+    );
+
+    await expect(service.addWorktree('test-repo', 'my-workspace', 'main')).rejects.toThrow(
+      GitOperationError,
+    );
+
+    spy.mockRestore();
   });
 });
 

@@ -4,6 +4,7 @@ import * as crypto from 'node:crypto';
 import type { Repository, Workspace, ReposConfig, WorkspacesConfig } from '../types/models.js';
 import { reposConfigSchema, workspacesConfigSchema } from '../types/models.js';
 import { createSquadPaths, type SquadPaths } from './squad-paths.js';
+import { generateSuffix, appendSuffix, MAX_SUFFIX_RETRY } from '../git/uuid-suffix.js';
 
 const CURRENT_VERSION = 1;
 
@@ -129,22 +130,38 @@ export class SquadStore {
   /**
    * 新しい Workspace を追加する。
    *
+   * @remarks 名前には UUID v4 先頭8文字の suffix が自動付与される。
+   * 同名が既に存在する場合は新しい UUID で最大3回リトライする。
    * @param workspace - 追加する Workspace の `name` と `entries`
-   * @returns `id`, `createdAt`, `updatedAt` が自動付与された Workspace
+   * @returns `id`, `createdAt`, `updatedAt` が自動付与された Workspace（name は suffix 付き）
    */
   async addWorkspace(workspace: Pick<Workspace, 'name' | 'entries'>): Promise<Workspace> {
-    const config = await this.readWorkspacesConfig();
-    const now = new Date().toISOString();
-    const newWorkspace: Workspace = {
-      id: crypto.randomUUID(),
-      name: workspace.name,
-      entries: [...workspace.entries],
-      createdAt: now,
-      updatedAt: now,
-    };
-    config.workspaces.push(newWorkspace);
-    await this.writeAtomically(this.paths.workspacesConfig, config);
-    return newWorkspace;
+    for (let attempt = 0; attempt < MAX_SUFFIX_RETRY; attempt++) {
+      const config = await this.readWorkspacesConfig();
+      const suffix = generateSuffix();
+      const actualName = appendSuffix(workspace.name, suffix);
+
+      // 同名チェック
+      if (config.workspaces.some((w) => w.name === actualName)) {
+        continue;
+      }
+
+      const now = new Date().toISOString();
+      const newWorkspace: Workspace = {
+        id: crypto.randomUUID(),
+        name: actualName,
+        entries: [...workspace.entries],
+        createdAt: now,
+        updatedAt: now,
+      };
+      config.workspaces.push(newWorkspace);
+      await this.writeAtomically(this.paths.workspacesConfig, config);
+      return newWorkspace;
+    }
+
+    throw new Error(
+      `Workspace '${workspace.name}' already exists after ${String(MAX_SUFFIX_RETRY)} retries`,
+    );
   }
 
   /**
