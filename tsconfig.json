@@ -26,7 +26,11 @@
       "@spartan-ng/helm/icon": ["./libs/ui/icon/src/index.ts"],
       "@spartan-ng/helm/dialog": ["./libs/ui/dialog/src/index.ts"],
       "@spartan-ng/helm/select": ["./libs/ui/select/src/index.ts"],
-      "@spartan-ng/helm/checkbox": ["./libs/ui/checkbox/src/index.ts"]
+      "@spartan-ng/helm/checkbox": ["./libs/ui/checkbox/src/index.ts"],
+      "@spartan-ng/helm/sidebar": ["./libs/ui/sidebar/src/index.ts"],
+      "@spartan-ng/helm/sheet": ["./libs/ui/sheet/src/index.ts"],
+      "@spartan-ng/helm/skeleton": ["./libs/ui/skeleton/src/index.ts"],
+      "@spartan-ng/helm/tooltip": ["./libs/ui/tooltip/src/index.ts"]
     }
   },
   "angularCompilerOptions": {
