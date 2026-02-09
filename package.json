@@ -6,7 +6,7 @@
   "scripts": {
     "ng": "ng",
     "build": "ng build",
-    "electron:build": "tsc -p electron/tsconfig.json",
+    "electron:build": "tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json",
     "electron:serve": "pnpm electron:build && electron .",
     "package": "pnpm build && pnpm electron:build && electron-builder",
     "lint": "eslint .",
@@ -14,7 +14,7 @@
     "format": "prettier --write \"src/**/*.{ts,html,css}\" \"electron/**/*.ts\" \"*.{json,md,js,mjs}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,css}\" \"electron/**/*.ts\" \"*.{json,md,js,mjs}\"",
     "test": "pnpm test:ng && pnpm test:electron",
-    "test:ng": "ng test",
+    "test:ng": "ng test --no-watch",
     "test:electron": "pnpm exec vitest run electron/ --exclude 'dist-electron/**'",
     "prepare": "husky"
   },
@@ -49,8 +49,6 @@
     "@angular/router": "^21.1.3",
     "@types/node": "^25.2.1",
     "concurrently": "^9.2.1",
-    "electron": "^40.2.1",
-    "electron-builder": "^26.7.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zod": "^4.3.6"
@@ -60,6 +58,8 @@
     "@angular/cli": "^21.1.3",
     "@angular/compiler-cli": "^21.1.3",
     "angular-eslint": "^21.2.0",
+    "electron": "^40.2.1",
+    "electron-builder": "^26.7.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "happy-dom": "^20.5.0",

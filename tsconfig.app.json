@@ -6,6 +6,6 @@
     "outDir": "./out-tsc/app",
     "types": []
   },
-  "include": ["src/**/*.ts", "electron/electron.d.ts", "electron/types/**/*.ts"],
+  "include": ["src/**/*.ts", "electron/types/**/*.ts"],
   "exclude": ["src/**/*.spec.ts"]
 }
