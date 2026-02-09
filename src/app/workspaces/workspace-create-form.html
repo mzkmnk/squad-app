@@ -39,13 +39,9 @@
         リポジトリが登録されていません。先にリポジトリを登録してください。
       </p>
     } @else {
-      <div class="flex max-h-64 flex-col gap-2 overflow-y-auto">
+      <div class="flex max-h-64 flex-col gap-1 overflow-y-auto">
         @for (repo of repositories(); track repo.id) {
-          <div
-            class="border-border rounded-md border p-3"
-            [class.ring-primary]="selectedRepoIds().has(repo.id)"
-            [class.ring-2]="selectedRepoIds().has(repo.id)"
-          >
+          <div class="rounded-md px-2 py-2">
             <div class="flex items-start gap-3">
               <hlm-checkbox
                 [checked]="selectedRepoIds().has(repo.id)"
