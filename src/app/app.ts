@@ -1,9 +1,11 @@
 import { Component, signal } from '@angular/core';
+import { HlmButtonImports } from '@spartan-ng/helm/button';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
+  imports: [HlmButtonImports],
 })
 export class App {
   protected readonly title = signal('squad-app');

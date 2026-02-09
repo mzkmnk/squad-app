@@ -48,6 +48,18 @@ export default tseslint.config(
     extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],
   },
 
+  // Spartan helm components - disable prefix rules and relax strict TS rules (generated code)
+  {
+    files: ['src/lib/**/*.ts'],
+    rules: {
+      '@angular-eslint/directive-selector': 'off',
+      '@angular-eslint/component-selector': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+
   // Electron TypeScript files
   {
     files: ['electron/**/*.ts'],
