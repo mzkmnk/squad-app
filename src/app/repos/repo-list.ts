@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
 import { toast } from 'ngx-sonner';
@@ -29,6 +30,7 @@ import type { Repository } from '../../../electron/types/models';
 })
 export class RepoListComponent {
   private readonly repoService = inject(RepositoryService);
+  private readonly router = inject(Router);
 
   protected readonly repositories = signal<Repository[]>([]);
   protected readonly loading = signal(true);
@@ -52,6 +54,10 @@ export class RepoListComponent {
 
   protected onRepoAdded(repo: Repository): void {
     this.repositories.update((repos) => [...repos, repo]);
+  }
+
+  protected navigateToCreateWorkspace(): void {
+    void this.router.navigate(['/workspaces/new']);
   }
 
   protected async removeRepository(id: string): Promise<void> {
