@@ -1,0 +1,40 @@
+<form class="flex flex-col gap-4" (submit)="onSubmit(); $event.preventDefault()">
+  <hlm-dialog-header>
+    <h3 hlmDialogTitle>リポジトリを追加</h3>
+    <p hlmDialogDescription>
+      リモートリポジトリの URL を入力してください。HTTPS と SSH 形式に対応しています。
+    </p>
+  </hlm-dialog-header>
+
+  <div hlmField [attr.data-invalid]="validationError() ? true : null">
+    <label hlmFieldLabel for="remote-url">リポジトリ URL</label>
+    <input
+      hlmInput
+      id="remote-url"
+      type="text"
+      placeholder="https://github.com/org/repo.git"
+      [value]="remoteUrl()"
+      (input)="remoteUrl.set($any($event.target).value)"
+      [disabled]="submitting()"
+      [attr.aria-invalid]="validationError() ? true : null"
+      autocomplete="url"
+    />
+    @if (validationError()) {
+      <hlm-field-error>{{ validationError() }}</hlm-field-error>
+    }
+  </div>
+
+  <div hlmDialogFooter>
+    <button hlmBtn variant="outline" type="button" [disabled]="submitting()" brnDialogClose>
+      キャンセル
+    </button>
+    <button hlmBtn type="submit" [disabled]="submitting()">
+      @if (submitting()) {
+        <hlm-spinner class="mr-1 text-xs" />
+        クローン中...
+      } @else {
+        登録
+      }
+    </button>
+  </div>
+</form>
