@@ -1,8 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Router } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
-import { lucideExternalLink, lucideGitBranch, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
+import { lucideExternalLink, lucideGitBranch, lucideTrash2 } from '@ng-icons/lucide';
 import { toast } from 'ngx-sonner';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
@@ -25,12 +24,11 @@ import type { Repository, Workspace } from '../../../electron/types/models';
     HlmIconImports,
     HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideExternalLink, lucideGitBranch, lucidePlus, lucideTrash2 })],
+  providers: [provideIcons({ lucideExternalLink, lucideGitBranch, lucideTrash2 })],
 })
 export class DashboardComponent {
   private readonly workspaceService = inject(WorkspaceService);
   private readonly repoService = inject(RepositoryService);
-  private readonly router = inject(Router);
 
   /** 作成済み Workspace 一覧 */
   protected readonly workspaces = signal<Workspace[]>([]);
@@ -124,15 +122,5 @@ export class DashboardComponent {
       next.delete(id);
       return next;
     });
-  }
-
-  /** Workspace 作成画面に遷移する */
-  protected navigateToCreate(): void {
-    void this.router.navigate(['/workspaces/new']);
-  }
-
-  /** リポジトリ管理画面に遷移する */
-  protected navigateToRepos(): void {
-    void this.router.navigate(['/repos']);
   }
 }

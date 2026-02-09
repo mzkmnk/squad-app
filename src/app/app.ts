@@ -1,11 +1,28 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import {
+  lucideGitFork,
+  lucideLayoutDashboard,
+  lucidePanelLeft,
+  lucidePlus,
+} from '@ng-icons/lucide';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { HlmSidebarImports } from '@spartan-ng/helm/sidebar';
 import { HlmToasterImports } from '@spartan-ng/helm/sonner';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
-  imports: [RouterOutlet, ...HlmToasterImports],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    ...HlmSidebarImports,
+    ...HlmIconImports,
+    ...HlmToasterImports,
+  ],
+  providers: [provideIcons({ lucideLayoutDashboard, lucideGitFork, lucidePlus, lucidePanelLeft })],
 })
 export class App {}

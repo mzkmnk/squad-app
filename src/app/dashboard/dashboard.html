@@ -1,14 +1,7 @@
 <div class="mx-auto max-w-6xl p-6">
   <!-- ヘッダー -->
-  <div class="mb-6 flex items-center justify-between">
+  <div class="mb-6">
     <h1 class="text-2xl font-bold">Dashboard</h1>
-    <div class="flex gap-2">
-      <button hlmBtn variant="outline" (click)="navigateToRepos()">リポジトリ管理</button>
-      <button hlmBtn (click)="navigateToCreate()">
-        <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
-        Workspace を作成
-      </button>
-    </div>
   </div>
 
   <!-- ローディング -->
@@ -24,7 +17,7 @@
         <div hlmCardHeader>
           <h3 hlmCardTitle>Workspace がありません</h3>
           <p hlmCardDescription>
-            「Workspace を作成」ボタンから新しい Workspace を作成してください。
+            サイドバーの「Workspace 作成」から新しい Workspace を作成してください。
           </p>
         </div>
       </section>

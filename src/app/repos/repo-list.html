@@ -1,20 +1,15 @@
 <div class="mx-auto max-w-6xl p-6">
   <div class="mb-6 flex items-center justify-between">
     <h1 class="text-2xl font-bold">リポジトリ</h1>
-    <div class="flex gap-2">
-      <button hlmBtn variant="outline" (click)="navigateToCreateWorkspace()">
-        Workspace を作成
+    <hlm-dialog>
+      <button hlmBtn hlmDialogTrigger>
+        <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
+        追加
       </button>
-      <hlm-dialog>
-        <button hlmBtn hlmDialogTrigger>
-          <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
-          追加
-        </button>
-        <hlm-dialog-content *hlmDialogPortal>
-          <app-repo-add-form (submitted)="onRepoAdded($event)" />
-        </hlm-dialog-content>
-      </hlm-dialog>
-    </div>
+      <hlm-dialog-content *hlmDialogPortal>
+        <app-repo-add-form (submitted)="onRepoAdded($event)" />
+      </hlm-dialog-content>
+    </hlm-dialog>
   </div>
 
   @if (loading()) {

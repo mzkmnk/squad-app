@@ -1,2 +1,65 @@
-<router-outlet />
+<div hlmSidebarWrapper>
+  <hlm-sidebar collapsible="icon">
+    <div hlmSidebarHeader>
+      <div class="flex items-center gap-2 px-2 py-1.5">
+        <span class="text-lg font-bold group-data-[collapsible=icon]:hidden">SquadApp</span>
+      </div>
+    </div>
+    <div hlmSidebarContent>
+      <div hlmSidebarGroup>
+        <div hlmSidebarGroupLabel>ナビゲーション</div>
+        <div hlmSidebarGroupContent>
+          <ul hlmSidebarMenu>
+            <li hlmSidebarMenuItem>
+              <a
+                hlmSidebarMenuButton
+                routerLink="/dashboard"
+                routerLinkActive
+                #rlaDashboard="routerLinkActive"
+                [isActive]="rlaDashboard.isActive"
+              >
+                <ng-icon hlm name="lucideLayoutDashboard" size="sm" />
+                <span>ダッシュボード</span>
+              </a>
+            </li>
+            <li hlmSidebarMenuItem>
+              <a
+                hlmSidebarMenuButton
+                routerLink="/repos"
+                routerLinkActive
+                #rlaRepos="routerLinkActive"
+                [isActive]="rlaRepos.isActive"
+              >
+                <ng-icon hlm name="lucideGitFork" size="sm" />
+                <span>リポジトリ</span>
+              </a>
+            </li>
+            <li hlmSidebarMenuItem>
+              <a
+                hlmSidebarMenuButton
+                routerLink="/workspaces/new"
+                routerLinkActive
+                #rlaCreate="routerLinkActive"
+                [isActive]="rlaCreate.isActive"
+              >
+                <ng-icon hlm name="lucidePlus" size="sm" />
+                <span>Workspace 作成</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <button hlmSidebarRail aria-label="サイドバーを切り替え"></button>
+  </hlm-sidebar>
+
+  <main hlmSidebarInset>
+    <header class="flex h-12 items-center gap-2 border-b px-4">
+      <button hlmSidebarTrigger aria-label="サイドバーを切り替え"></button>
+    </header>
+    <div class="flex-1">
+      <router-outlet />
+    </div>
+  </main>
+</div>
 <hlm-toaster />
