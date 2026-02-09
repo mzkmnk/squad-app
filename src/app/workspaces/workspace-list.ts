@@ -1,51 +1,45 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { provideIcons } from '@ng-icons/core';
-import { lucideExternalLink, lucideGitBranch, lucideTrash2 } from '@ng-icons/lucide';
+import { lucideExternalLink, lucideGitBranch, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
 import { toast } from 'ngx-sonner';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
 import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
 import { RepositoryService } from '../services/repository.service';
 import { WorkspaceService } from '../services/workspace.service';
+import { WorkspaceCreateFormComponent } from './workspace-create-form';
 import type { Repository, Workspace } from '../../../electron/types/models';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-workspace-list',
   standalone: true,
-  templateUrl: './dashboard.html',
+  templateUrl: './workspace-list.html',
   imports: [
     DatePipe,
+    WorkspaceCreateFormComponent,
     HlmAlertDialogImports,
     HlmButtonImports,
     HlmCardImports,
+    HlmDialogImports,
     HlmIconImports,
     HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideExternalLink, lucideGitBranch, lucideTrash2 })],
+  providers: [provideIcons({ lucideExternalLink, lucideGitBranch, lucidePlus, lucideTrash2 })],
 })
-export class DashboardComponent {
+export class WorkspaceListComponent {
   private readonly workspaceService = inject(WorkspaceService);
   private readonly repoService = inject(RepositoryService);
 
-  /** 作成済み Workspace 一覧 */
   protected readonly workspaces = signal<Workspace[]>([]);
-
-  /** 登録済みリポジトリ一覧 */
   protected readonly repositories = signal<Repository[]>([]);
-
-  /** ローディング状態 */
   protected readonly loading = signal(true);
-
-  /** 削除処理中の Workspace ID セット */
   protected readonly deletingIds = signal<Set<string>>(new Set());
-
-  /** Open 処理中の Workspace ID セット */
   protected readonly openingIds = signal<Set<string>>(new Set());
 
-  /** repositoryId → Repository の Map */
   protected readonly repoMap = computed(() => {
     const map = new Map<string, Repository>();
     for (const repo of this.repositories()) {
@@ -58,7 +52,6 @@ export class DashboardComponent {
     void this.initialize();
   }
 
-  /** 初期化: Workspace 一覧 + リポジトリ一覧を並行取得 */
   private async initialize(): Promise<void> {
     this.loading.set(true);
 
@@ -82,12 +75,14 @@ export class DashboardComponent {
     this.loading.set(false);
   }
 
-  /** repositoryId からリポジトリ名を解決する */
   protected getRepoName(repositoryId: string): string {
     return this.repoMap().get(repositoryId)?.name ?? '不明なリポジトリ';
   }
 
-  /** Workspace を VS Code で開く */
+  protected onWorkspaceCreated(ws: Workspace): void {
+    this.workspaces.update((list) => [...list, ws]);
+  }
+
   protected async openWorkspace(id: string): Promise<void> {
     this.openingIds.update((ids) => new Set([...ids, id]));
 
@@ -105,7 +100,6 @@ export class DashboardComponent {
     });
   }
 
-  /** Workspace を削除する */
   protected async deleteWorkspace(id: string): Promise<void> {
     this.deletingIds.update((ids) => new Set([...ids, id]));
 

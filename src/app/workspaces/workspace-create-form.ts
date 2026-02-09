@@ -1,12 +1,13 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideCheck, lucideLoader } from '@ng-icons/lucide';
-import { toast } from 'ngx-sonner';
+import { Component, computed, inject, output, signal } from '@angular/core';
+import { BrnDialogClose, BrnDialogRef } from '@spartan-ng/brain/dialog';
 import { BrnSelectImports } from '@spartan-ng/brain/select';
+import { provideIcons } from '@ng-icons/core';
+import { lucideLoader } from '@ng-icons/lucide';
+import { toast } from 'ngx-sonner';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmCheckboxImports } from '@spartan-ng/helm/checkbox';
+import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
 import { HlmInputImports } from '@spartan-ng/helm/input';
@@ -15,17 +16,19 @@ import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
 import { RepositoryService } from '../services/repository.service';
 import { WorkspaceService } from '../services/workspace.service';
-import type { Repository } from '../../../electron/types/models';
+import type { Repository, Workspace } from '../../../electron/types/models';
 
 @Component({
-  selector: 'app-workspace-create',
+  selector: 'app-workspace-create-form',
   standalone: true,
-  templateUrl: './workspace-create.html',
+  templateUrl: './workspace-create-form.html',
   imports: [
+    BrnDialogClose,
     BrnSelectImports,
     HlmButtonImports,
     HlmCardImports,
     HlmCheckboxImports,
+    HlmDialogImports,
     HlmFieldImports,
     HlmIconImports,
     HlmInputImports,
@@ -33,12 +36,12 @@ import type { Repository } from '../../../electron/types/models';
     HlmSeparatorImports,
     HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideArrowLeft, lucideLoader, lucideCheck })],
+  providers: [provideIcons({ lucideLoader })],
 })
-export class WorkspaceCreateComponent {
+export class WorkspaceCreateFormComponent {
   private readonly repoService = inject(RepositoryService);
   private readonly workspaceService = inject(WorkspaceService);
-  private readonly router = inject(Router);
+  private readonly dialogRef = inject(BrnDialogRef);
 
   protected readonly workspaceName = signal('');
   protected readonly repositories = signal<Repository[]>([]);
@@ -51,10 +54,7 @@ export class WorkspaceCreateComponent {
   protected readonly nameError = signal<string | null>(null);
   protected readonly selectionError = signal<string | null>(null);
 
-  protected readonly selectedRepositories = computed(() => {
-    const ids = this.selectedRepoIds();
-    return this.repositories().filter((r) => ids.has(r.id));
-  });
+  readonly created = output<Workspace>();
 
   protected readonly canSubmit = computed(() => {
     if (this.creating()) return false;
@@ -72,29 +72,21 @@ export class WorkspaceCreateComponent {
 
   private async initialize(): Promise<void> {
     this.loadingRepos.set(true);
-
     const result = await this.repoService.getRepositories();
     if (result.success) {
       this.repositories.set(result.data);
-      this.autoFetchAll(result.data);
+      for (const repo of result.data) {
+        void this.fetchAndLoadBranches(repo.id);
+      }
     } else {
       toast.error(result.error.message);
     }
-
     this.loadingRepos.set(false);
-  }
-
-  private autoFetchAll(repos: Repository[]): void {
-    for (const repo of repos) {
-      void this.fetchAndLoadBranches(repo.id);
-    }
   }
 
   private async fetchAndLoadBranches(repoId: string): Promise<void> {
     this.fetchingIds.update((ids) => new Set([...ids, repoId]));
-
     await this.repoService.fetchRepository(repoId);
-
     const branchResult = await this.repoService.getRemoteBranches(repoId);
     if (branchResult.success) {
       this.branchesMap.update((map) => {
@@ -103,7 +95,6 @@ export class WorkspaceCreateComponent {
         return next;
       });
     }
-
     this.fetchingIds.update((ids) => {
       const next = new Set(ids);
       next.delete(repoId);
@@ -140,7 +131,6 @@ export class WorkspaceCreateComponent {
 
   protected validate(): boolean {
     let valid = true;
-
     const name = this.workspaceName().trim();
     if (name.length === 0) {
       this.nameError.set('Workspace名を入力してください');
@@ -163,17 +153,13 @@ export class WorkspaceCreateComponent {
           break;
         }
       }
-      if (valid) {
-        this.selectionError.set(null);
-      }
+      if (valid) this.selectionError.set(null);
     }
-
     return valid;
   }
 
-  protected async onCreate(): Promise<void> {
+  protected async onSubmit(): Promise<void> {
     if (!this.validate()) return;
-
     this.creating.set(true);
 
     const entries = [...this.selectedRepoIds()].map((repoId) => ({
@@ -188,15 +174,11 @@ export class WorkspaceCreateComponent {
 
     if (result.success) {
       toast.success(`Workspace「${result.data.name}」を作成しました`);
-      void this.router.navigate(['/']);
+      this.created.emit(result.data);
+      this.dialogRef.close();
     } else {
       toast.error(result.error.message);
     }
-
     this.creating.set(false);
-  }
-
-  protected onCancel(): void {
-    void this.router.navigate(['/']);
   }
 }

@@ -13,13 +13,13 @@
             <li hlmSidebarMenuItem>
               <a
                 hlmSidebarMenuButton
-                routerLink="/dashboard"
+                routerLink="/workspaces"
                 routerLinkActive
-                #rlaDashboard="routerLinkActive"
-                [isActive]="rlaDashboard.isActive"
+                #rlaWorkspaces="routerLinkActive"
+                [isActive]="rlaWorkspaces.isActive"
               >
                 <ng-icon hlm name="lucideLayoutDashboard" size="sm" />
-                <span>ダッシュボード</span>
+                <span>ワークスペース</span>
               </a>
             </li>
             <li hlmSidebarMenuItem>
@@ -32,18 +32,6 @@
               >
                 <ng-icon hlm name="lucideGitFork" size="sm" />
                 <span>リポジトリ</span>
-              </a>
-            </li>
-            <li hlmSidebarMenuItem>
-              <a
-                hlmSidebarMenuButton
-                routerLink="/workspaces/new"
-                routerLinkActive
-                #rlaCreate="routerLinkActive"
-                [isActive]="rlaCreate.isActive"
-              >
-                <ng-icon hlm name="lucidePlus" size="sm" />
-                <span>Workspace 作成</span>
               </a>
             </li>
           </ul>
