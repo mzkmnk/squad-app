@@ -65,9 +65,6 @@ export class RepoListComponent {
   /** ローディング状態 */
   loading: Signal<boolean>;
 
-  /** エラーメッセージ */
-  error: Signal<string | null>;
-
   /** リポジトリ追加フォームの表示状態 */
   showAddForm: Signal<boolean>;
 }
@@ -94,8 +91,8 @@ export class RepoAddFormComponent {
   /** 送信中フラグ（クローン処理中） */
   submitting: Signal<boolean>;
 
-  /** バリデーションエラーまたは IPC エラーメッセージ */
-  errorMessage: Signal<string | null>;
+  /** バリデーションエラーメッセージ（フィールドレベル表示用） */
+  validationError: Signal<string | null>;
 
   /** フォーム送信イベント */
   submitted = output<Repository>();
@@ -134,19 +131,19 @@ export class RepoAddFormComponent {
 | コンポーネント | import                        | 用途                                            |
 | -------------- | ----------------------------- | ----------------------------------------------- |
 | Button         | `HlmButtonImports`            | 追加・削除・キャンセルボタン                    |
-| Card           | `HlmCardImports`              | リポジトリ行、追加フォーム、空状態の表示        |
-| Alert          | `HlmAlertImports`             | エラーメッセージ表示（destructive variant）     |
+| Card           | `HlmCardImports`              | リポジトリカード、追加フォーム、空状態の表示    |
+| Sonner         | `HlmToasterImports` + `toast` | エラー通知のトースト表示                        |
 | Alert Dialog   | `HlmAlertDialogImports`       | 削除確認ダイアログ                              |
 | Field          | `HlmFieldImports`             | フォームフィールド構造（label + input + error） |
 | Input          | `HlmInputImports`             | URL テキスト入力                                |
 | Spinner        | `HlmSpinnerImports`           | ローディング・送信中表示                        |
-| Icon           | `HlmIconComponent` + `NgIcon` | Lucide アイコン（Plus, Trash2, TriangleAlert）  |
+| Icon           | `HlmIconComponent` + `NgIcon` | Lucide アイコン（Plus, Trash2）                 |
 
 ### インストール（未インストールの場合）
 
 ```bash
 ng g @spartan-ng/cli:ui card
-ng g @spartan-ng/cli:ui alert
+ng g @spartan-ng/cli:ui sonner
 ng g @spartan-ng/cli:ui alert-dialog
 ng g @spartan-ng/cli:ui field
 ng g @spartan-ng/cli:ui input
@@ -156,13 +153,27 @@ ng g @spartan-ng/cli:ui icon
 
 `button` と `utils` は既にインストール済み。
 
+### Sonner（トースト通知）
+
+エラー通知には `ngx-sonner` + `@spartan-ng/helm/sonner` を使用する。
+
+- `<hlm-toaster />` を `app.html` のルートテンプレートに配置（アプリ全体で1つ）
+- エラー発生時は `toast.error('メッセージ')` をプログラム的に呼び出す
+- デフォルトテーマ: `light`、位置: `bottom-right`
+
+```typescript
+import { toast } from 'ngx-sonner';
+
+// 使用例
+toast.error('リポジトリの取得に失敗しました');
+```
+
 ### Lucide アイコン
 
 `@ng-icons/lucide` から以下のアイコンを使用:
 
 - `lucidePlus` — 追加ボタン
 - `lucideTrash2` — 削除ボタン
-- `lucideTriangleAlert` — エラーアラート
 
 `provideIcons()` でコンポーネントレベルに登録する。
 
@@ -236,13 +247,12 @@ export class RepositoryService {
     RepoAddFormComponent,
     HlmButtonImports,
     HlmCardImports,
-    HlmAlertImports,
     HlmAlertDialogImports,
     HlmSpinnerImports,
     HlmIconComponent,
     NgIcon,
   ],
-  providers: [provideIcons({ lucideTrash2, lucidePlus, lucideTriangleAlert })],
+  providers: [provideIcons({ lucideTrash2, lucidePlus })],
 })
 export class RepoListComponent implements OnInit {
   private readonly repoService = inject(RepositoryService);
@@ -252,9 +262,6 @@ export class RepoListComponent implements OnInit {
 
   /** ローディング状態 */
   protected readonly loading = signal(true);
-
-  /** エラーメッセージ */
-  protected readonly error = signal<string | null>(null);
 
   /** 追加フォーム表示フラグ */
   protected readonly showAddForm = signal(false);
@@ -269,13 +276,12 @@ export class RepoListComponent implements OnInit {
   /** リポジトリ一覧を読み込む */
   protected async loadRepositories(): Promise<void> {
     this.loading.set(true);
-    this.error.set(null);
 
     const result = await this.repoService.getRepositories();
     if (result.success) {
       this.repositories.set(result.data);
     } else {
-      this.error.set(result.error.message);
+      toast.error(result.error.message);
     }
     this.loading.set(false);
   }
@@ -294,7 +300,7 @@ export class RepoListComponent implements OnInit {
     if (result.success) {
       this.repositories.update((repos) => repos.filter((r) => r.id !== id));
     } else {
-      this.error.set(result.error.message);
+      toast.error(result.error.message);
     }
 
     this.deletingIds.update((ids) => {
@@ -312,11 +318,13 @@ export class RepoListComponent implements OnInit {
 - リポジトリ追加成功時はローカルのシグナルに追加するだけで、再度 `repo:list` を呼ばない（楽観的更新）
 - 削除中のリポジトリ ID を `deletingIds` で管理し、UI 上でローディング表示を出す
 - `OnInit` ライフサイクルフックを使用（`constructor` での非同期処理は避ける）
+- エラー通知は `toast.error()` で統一。`error` シグナルは不要になったため削除
+- `HlmAlertImports` は不要になったため import から削除
 
 #### `src/app/repos/repo-list.html` — リポジトリ一覧テンプレート
 
 ```html
-<div class="mx-auto max-w-2xl p-6">
+<div class="mx-auto max-w-6xl p-6">
   <div class="mb-6 flex items-center justify-between">
     <h1 class="text-2xl font-bold">リポジトリ</h1>
     <button hlmBtn (click)="showAddForm.set(!showAddForm())">
@@ -331,15 +339,6 @@ export class RepoListComponent implements OnInit {
   <app-repo-add-form (submitted)="onRepoAdded($event)" (cancelled)="showAddForm.set(false)" />
   }
 
-  <!-- エラー表示 -->
-  @if (error()) {
-  <div hlmAlert variant="destructive" class="mb-4">
-    <ng-icon hlm hlmAlertIcon name="lucideTriangleAlert" />
-    <h4 hlmAlertTitle>エラー</h4>
-    <div hlmAlertDescription>{{ error() }}</div>
-  </div>
-  }
-
   <!-- ローディング -->
   @if (loading()) {
   <div class="flex items-center justify-center gap-2 py-8">
@@ -347,7 +346,7 @@ export class RepoListComponent implements OnInit {
     <span class="text-muted-foreground text-sm">読み込み中...</span>
   </div>
   } @else {
-  <!-- リポジトリ一覧 -->
+  <!-- リポジトリ一覧（グリッドレイアウト） -->
   @if (repositories().length === 0) {
   <section hlmCard class="text-center">
     <div hlmCardHeader>
@@ -356,28 +355,29 @@ export class RepoListComponent implements OnInit {
     </div>
   </section>
   } @else {
-  <ul class="space-y-3" role="list">
+  <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4" role="list">
     @for (repo of repositories(); track repo.id) {
-    <li hlmCard>
-      <div class="flex items-center justify-between p-4">
-        <div class="min-w-0 flex-1">
-          <p class="font-medium">{{ repo.name }}</p>
-          <p class="text-muted-foreground truncate text-sm">{{ repo.remoteUrl }}</p>
-        </div>
+    <div hlmCard role="listitem" class="flex flex-col justify-between">
+      <div hlmCardHeader class="pb-2">
+        <h3 hlmCardTitle class="text-base">{{ repo.name }}</h3>
+        <p hlmCardDescription class="truncate text-xs">{{ repo.remoteUrl }}</p>
+      </div>
+      <div hlmCardFooter class="pt-2">
         <!-- 削除確認ダイアログ -->
         <hlm-alert-dialog>
           <button
             hlmAlertDialogTrigger
             hlmBtn
             variant="destructive"
-            size="sm"
+            size="icon"
             [disabled]="deletingIds().has(repo.id)"
+            aria-label="削除"
           >
             @if (deletingIds().has(repo.id)) {
-            <hlm-spinner class="mr-1 text-xs" />
-            削除中... } @else {
-            <ng-icon hlm name="lucideTrash2" size="sm" class="mr-1" />
-            削除 }
+            <hlm-spinner class="text-xs" />
+            } @else {
+            <ng-icon hlm name="lucideTrash2" size="sm" />
+            }
           </button>
           <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
             <hlm-alert-dialog-header>
@@ -396,9 +396,9 @@ export class RepoListComponent implements OnInit {
           </hlm-alert-dialog-content>
         </hlm-alert-dialog>
       </div>
-    </li>
+    </div>
     }
-  </ul>
+  </div>
   } }
 </div>
 ```
@@ -407,12 +407,14 @@ export class RepoListComponent implements OnInit {
 
 - Angular 21 の `@if` / `@for` 制御フロー構文を使用（`*ngIf` / `*ngFor` は使わない）
 - `@for` の `track` に `repo.id` を指定し、DOM の再利用を最適化
-- `hlmCard` でリポジトリ各行をカードとして表示し、空状態もカードで統一感を持たせる
-- `hlmAlert` + `variant="destructive"` でエラー表示（アイコン・タイトル・説明の構造化）
+- **グリッドレイアウト**: `grid-cols-[repeat(auto-fill,minmax(220px,1fr))]` で1行に4〜5枚のカードが並ぶレスポンシブグリッドを実現
+- `max-w-6xl` でコンテナ幅を広げ、グリッドレイアウトに十分なスペースを確保
+- 各リポジトリは `hlmCard` のコンパクトなカードとして表示（名前 + URL + アイコンのみの削除ボタン）
+- 削除ボタンは `size="icon"` でアイコンのみのコンパクトなボタンに変更（グリッドカード内のスペース節約）
+- エラー通知は `toast.error()` で表示するため、テンプレートにエラー表示用の DOM は不要
 - `hlm-alert-dialog` で削除前の確認ダイアログを表示（誤操作防止、AC8 の確認ダイアログ要件に対応）
 - `hlm-spinner` でローディング中・削除中のフィードバックを提供
-- `ng-icon` + `hlm` で Lucide アイコン（`lucidePlus`, `lucideTrash2`, `lucideTriangleAlert`）を使用
-- 削除ボタンは `deletingIds` で disabled 制御し、二重クリックを防止
+- 空状態もカードで統一感を持たせる
 
 #### `src/app/repos/repo-add-form.ts` — リポジトリ追加フォーム
 
@@ -432,8 +434,8 @@ export class RepoAddFormComponent {
   /** 送信中フラグ */
   protected readonly submitting = signal(false);
 
-  /** エラーメッセージ */
-  protected readonly errorMessage = signal<string | null>(null);
+  /** バリデーションエラーメッセージ（フィールドレベル） */
+  protected readonly validationError = signal<string | null>(null);
 
   /** フォーム送信イベント */
   readonly submitted = output<Repository>();
@@ -455,11 +457,11 @@ export class RepoAddFormComponent {
 
   /** フォーム送信 */
   protected async onSubmit(): Promise<void> {
-    this.errorMessage.set(null);
+    this.validationError.set(null);
 
-    const validationError = this.validate();
-    if (validationError) {
-      this.errorMessage.set(validationError);
+    const error = this.validate();
+    if (error) {
+      this.validationError.set(error);
       return;
     }
 
@@ -470,7 +472,7 @@ export class RepoAddFormComponent {
       this.remoteUrl.set('');
       this.submitted.emit(result.data);
     } else {
-      this.errorMessage.set(result.error.message);
+      toast.error(result.error.message);
     }
 
     this.submitting.set(false);
@@ -484,6 +486,7 @@ export class RepoAddFormComponent {
 - バリデーションは `validate()` プライベートメソッドに集約し、テスト容易性を確保
 - 送信成功時に `remoteUrl` をリセットし、`submitted` イベントで親コンポーネントに通知
 - `submitting` フラグで送信ボタンを disabled にし、クローン処理中の二重送信を防止
+- **エラーの使い分け**: クライアントサイドバリデーションエラーは `validationError` シグナルでフィールドレベルに表示（`hlm-field-error`）。IPC エラー（`REPOSITORY_EXISTS`, `GIT_OPERATION_FAILED` 等）は `toast.error()` でトースト通知する
 
 #### `src/app/repos/repo-add-form.html` — 追加フォームテンプレート
 
@@ -497,7 +500,7 @@ export class RepoAddFormComponent {
       </p>
     </div>
     <div hlmCardContent>
-      <div hlmField [attr.data-invalid]="errorMessage() ? true : null">
+      <div hlmField [attr.data-invalid]="validationError() ? true : null">
         <label hlmFieldLabel for="remote-url">リポジトリ URL</label>
         <input
           hlmInput
@@ -507,11 +510,11 @@ export class RepoAddFormComponent {
           [value]="remoteUrl()"
           (input)="remoteUrl.set($any($event.target).value)"
           [disabled]="submitting()"
-          [attr.aria-invalid]="errorMessage() ? true : null"
+          [attr.aria-invalid]="validationError() ? true : null"
           autocomplete="url"
         />
-        @if (errorMessage()) {
-        <hlm-field-error>{{ errorMessage() }}</hlm-field-error>
+        @if (validationError()) {
+        <hlm-field-error>{{ validationError() }}</hlm-field-error>
         }
       </div>
     </div>
@@ -539,7 +542,8 @@ export class RepoAddFormComponent {
 
 - `hlmCard` + `hlmCardHeader` / `hlmCardContent` / `hlmCardFooter` でフォーム全体を構造化
 - `hlmField` + `hlmFieldLabel` + `hlmInput` + `hlm-field-error` で spartan-ng のフォームフィールドパターンを使用
-- `data-invalid` 属性で `hlmField` をエラー状態に切り替え、`aria-invalid` でアクセシビリティを確保
+- `data-invalid` + `aria-invalid` は `validationError` シグナルに連動（クライアントサイドバリデーションのみ）
+- IPC エラーは `toast.error()` で通知するため、フォーム内にはバリデーションエラーのみ表示
 - `hlm-spinner` で送信中のフィードバックをボタン内に表示
 - `<form>` タグで囲み、Enter キーでの送信に対応
 - `$event.preventDefault()` でフォームのデフォルト送信を抑止
@@ -575,12 +579,13 @@ export const routes: Routes = [
 ```typescript
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { HlmToasterComponent } from '@spartan-ng/helm/sonner';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, HlmToasterComponent],
 })
 export class App {}
 ```
@@ -589,18 +594,20 @@ export class App {}
 
 - `HlmButtonImports` の import を削除（テスト用コードの除去）
 - `RouterOutlet` を import に追加
+- `HlmToasterComponent` を import に追加（Sonner トースト通知の受け口）
 - テスト用の `title`, `message` シグナルと `testIPC()` メソッドを削除
 
 #### `src/app/app.html` — ルートテンプレート変更
 
 ```html
-<router-outlet />
+<router-outlet /> <hlm-toaster />
 ```
 
 **変更内容**:
 
-- テスト用の UI を削除し、`<router-outlet />` のみに変更
-- 全ての画面コンテンツはルーティングされたコンポーネントが描画する
+- テスト用の UI を削除し、`<router-outlet />` + `<hlm-toaster />` に変更
+- `<hlm-toaster />` はアプリ全体で1つ配置し、全コンポーネントから `toast.*()` で通知を表示できるようにする
+- デフォルトテーマ: `light`、位置: `bottom-right`
 
 ## ルーティング設計
 
@@ -644,7 +651,7 @@ export class App {}
 
 - [ ] 初期表示時に `RepositoryService.getRepositories()` が呼ばれる
 - [ ] 取得成功時にリポジトリ一覧が表示される（名前・URL）
-- [ ] 取得失敗時にエラーメッセージが表示される
+- [ ] 取得失敗時に `toast.error()` が呼ばれる
 - [ ] リポジトリが0件の場合に空状態メッセージが表示される
 - [ ] 「追加」ボタンクリックで `RepoAddFormComponent` が表示される
 - [ ] 「キャンセル」ボタンクリックで追加フォームが非表示になる
@@ -652,7 +659,7 @@ export class App {}
 - [ ] 確認ダイアログで「削除する」をクリックすると `RepositoryService.removeRepository()` が呼ばれる
 - [ ] 確認ダイアログで「キャンセル」をクリックするとダイアログが閉じ、削除されない
 - [ ] 削除成功時にリポジトリが一覧から消える
-- [ ] 削除失敗時にエラーメッセージが表示される
+- [ ] 削除失敗時に `toast.error()` が呼ばれる
 - [ ] 削除中はボタンが disabled になり「削除中...」と表示される
 - [ ] ローディング中に「読み込み中...」が表示される
 
@@ -666,8 +673,8 @@ export class App {}
 - [ ] 有効な SSH URL（`git@`）で送信すると `RepositoryService.addRepository()` が呼ばれる
 - [ ] 登録成功時に `submitted` イベントが emit される
 - [ ] 登録成功時に URL 入力がクリアされる
-- [ ] 登録失敗時（`VALIDATION_ERROR`）にエラーメッセージが表示される
-- [ ] 登録失敗時（`REPOSITORY_EXISTS`）にエラーメッセージが表示される
+- [ ] 登録失敗時（`VALIDATION_ERROR`）に `toast.error()` が呼ばれる
+- [ ] 登録失敗時（`REPOSITORY_EXISTS`）に `toast.error()` が呼ばれる
 - [ ] 送信中はボタンが disabled になり「クローン中...」と表示される
 - [ ] キャンセルボタンクリックで `cancelled` イベントが emit される
 
@@ -720,10 +727,11 @@ TestBed.configureTestingModule({
 - `hlm-field-error` によるバリデーションエラーのアクセシブルな通知
 - `data-invalid` + `aria-invalid` によるエラー状態の明示
 - `hlm-alert-dialog` による削除確認のモーダルダイアログ（フォーカストラップ・ESC キー閉じ対応）
-- `hlmAlertIcon` によるアラートアイコンのアクセシブルな表示
 - `hlm-spinner` の `aria-label="Loading"` によるスクリーンリーダー対応
 - `disabled` 属性による操作不可状態の明示
 - キーボード操作: `<form>` + `<button type="submit">` で Enter キー送信に対応
+- 削除ボタン（`size="icon"`）に `aria-label="削除"` を付与し、テキストなしでもスクリーンリーダーが読み上げ可能
+- Sonner トーストは `role="status"` + `aria-live="polite"` でスクリーンリーダーに通知される（ngx-sonner 内蔵）
 
 ### 監視・ログ
 
@@ -737,3 +745,4 @@ TestBed.configureTestingModule({
 | ---------- | --------------------------------------------------------------------------------------------- |
 | 2026-02-09 | 初版作成                                                                                      |
 | 2026-02-09 | spartan-ng コンポーネント活用に変更（card, alert, alert-dialog, field, input, spinner, icon） |
+| 2026-02-09 | グリッドレイアウト（4〜5カード/行）、ライトモードデフォルト、エラー通知を Sonner toast に変更 |
