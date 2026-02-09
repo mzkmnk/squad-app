@@ -129,6 +129,43 @@ export class RepoAddFormComponent {
 - 厳密な URL バリデーションはメインプロセス側（`git-validation.ts`）で実施済みのため、フロントエンドでは最低限の形式チェックのみ行う
 - メインプロセスから返される `VALIDATION_ERROR` はそのままユーザーに表示する
 
+## 使用する spartan-ng コンポーネント
+
+| コンポーネント | import                        | 用途                                            |
+| -------------- | ----------------------------- | ----------------------------------------------- |
+| Button         | `HlmButtonImports`            | 追加・削除・キャンセルボタン                    |
+| Card           | `HlmCardImports`              | リポジトリ行、追加フォーム、空状態の表示        |
+| Alert          | `HlmAlertImports`             | エラーメッセージ表示（destructive variant）     |
+| Alert Dialog   | `HlmAlertDialogImports`       | 削除確認ダイアログ                              |
+| Field          | `HlmFieldImports`             | フォームフィールド構造（label + input + error） |
+| Input          | `HlmInputImports`             | URL テキスト入力                                |
+| Spinner        | `HlmSpinnerImports`           | ローディング・送信中表示                        |
+| Icon           | `HlmIconComponent` + `NgIcon` | Lucide アイコン（Plus, Trash2, TriangleAlert）  |
+
+### インストール（未インストールの場合）
+
+```bash
+ng g @spartan-ng/cli:ui card
+ng g @spartan-ng/cli:ui alert
+ng g @spartan-ng/cli:ui alert-dialog
+ng g @spartan-ng/cli:ui field
+ng g @spartan-ng/cli:ui input
+ng g @spartan-ng/cli:ui spinner
+ng g @spartan-ng/cli:ui icon
+```
+
+`button` と `utils` は既にインストール済み。
+
+### Lucide アイコン
+
+`@ng-icons/lucide` から以下のアイコンを使用:
+
+- `lucidePlus` — 追加ボタン
+- `lucideTrash2` — 削除ボタン
+- `lucideTriangleAlert` — エラーアラート
+
+`provideIcons()` でコンポーネントレベルに登録する。
+
 ## コンポーネント構成
 
 ```
@@ -195,7 +232,17 @@ export class RepositoryService {
   selector: 'app-repo-list',
   standalone: true,
   templateUrl: './repo-list.html',
-  imports: [RepoAddFormComponent, HlmButtonImports],
+  imports: [
+    RepoAddFormComponent,
+    HlmButtonImports,
+    HlmCardImports,
+    HlmAlertImports,
+    HlmAlertDialogImports,
+    HlmSpinnerImports,
+    HlmIconComponent,
+    NgIcon,
+  ],
+  providers: [provideIcons({ lucideTrash2, lucidePlus, lucideTriangleAlert })],
 })
 export class RepoListComponent implements OnInit {
   private readonly repoService = inject(RepositoryService);
@@ -273,7 +320,9 @@ export class RepoListComponent implements OnInit {
   <div class="mb-6 flex items-center justify-between">
     <h1 class="text-2xl font-bold">リポジトリ</h1>
     <button hlmBtn (click)="showAddForm.set(!showAddForm())">
-      @if (showAddForm()) { キャンセル } @else { 追加 }
+      @if (showAddForm()) { キャンセル } @else {
+      <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
+      追加 }
     </button>
   </div>
 
@@ -284,39 +333,69 @@ export class RepoListComponent implements OnInit {
 
   <!-- エラー表示 -->
   @if (error()) {
-  <div
-    class="border-destructive/50 bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm"
-  >
-    {{ error() }}
+  <div hlmAlert variant="destructive" class="mb-4">
+    <ng-icon hlm hlmAlertIcon name="lucideTriangleAlert" />
+    <h4 hlmAlertTitle>エラー</h4>
+    <div hlmAlertDescription>{{ error() }}</div>
   </div>
   }
 
   <!-- ローディング -->
   @if (loading()) {
-  <p class="text-muted-foreground">読み込み中...</p>
+  <div class="flex items-center justify-center gap-2 py-8">
+    <hlm-spinner />
+    <span class="text-muted-foreground text-sm">読み込み中...</span>
+  </div>
   } @else {
   <!-- リポジトリ一覧 -->
   @if (repositories().length === 0) {
-  <p class="text-muted-foreground">
-    リポジトリが登録されていません。「追加」ボタンからリポジトリを登録してください。
-  </p>
+  <section hlmCard class="text-center">
+    <div hlmCardHeader>
+      <h3 hlmCardTitle>リポジトリが登録されていません</h3>
+      <p hlmCardDescription>「追加」ボタンからリポジトリを登録してください。</p>
+    </div>
+  </section>
   } @else {
   <ul class="space-y-3" role="list">
     @for (repo of repositories(); track repo.id) {
-    <li class="border-border flex items-center justify-between rounded-lg border p-4">
-      <div class="min-w-0 flex-1">
-        <p class="font-medium">{{ repo.name }}</p>
-        <p class="text-muted-foreground truncate text-sm">{{ repo.remoteUrl }}</p>
+    <li hlmCard>
+      <div class="flex items-center justify-between p-4">
+        <div class="min-w-0 flex-1">
+          <p class="font-medium">{{ repo.name }}</p>
+          <p class="text-muted-foreground truncate text-sm">{{ repo.remoteUrl }}</p>
+        </div>
+        <!-- 削除確認ダイアログ -->
+        <hlm-alert-dialog>
+          <button
+            hlmAlertDialogTrigger
+            hlmBtn
+            variant="destructive"
+            size="sm"
+            [disabled]="deletingIds().has(repo.id)"
+          >
+            @if (deletingIds().has(repo.id)) {
+            <hlm-spinner class="mr-1 text-xs" />
+            削除中... } @else {
+            <ng-icon hlm name="lucideTrash2" size="sm" class="mr-1" />
+            削除 }
+          </button>
+          <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
+            <hlm-alert-dialog-header>
+              <h2 hlmAlertDialogTitle>リポジトリを削除しますか？</h2>
+              <p hlmAlertDialogDescription>
+                「{{ repo.name }}」を削除すると、Bare Repository
+                がディスクから完全に消去されます。この操作は取り消せません。
+              </p>
+            </hlm-alert-dialog-header>
+            <hlm-alert-dialog-footer>
+              <button hlmAlertDialogCancel (click)="ctx.close()">キャンセル</button>
+              <button hlmAlertDialogAction (click)="ctx.close(); removeRepository(repo.id)">
+                削除する
+              </button>
+            </hlm-alert-dialog-footer>
+          </hlm-alert-dialog-content>
+        </hlm-alert-dialog>
       </div>
-      <button
-        hlmBtn
-        variant="destructive"
-        size="sm"
-        [disabled]="deletingIds().has(repo.id)"
-        (click)="removeRepository(repo.id)"
-      >
-        @if (deletingIds().has(repo.id)) { 削除中... } @else { 削除 }
-      </button>
     </li>
     }
   </ul>
@@ -328,8 +407,11 @@ export class RepoListComponent implements OnInit {
 
 - Angular 21 の `@if` / `@for` 制御フロー構文を使用（`*ngIf` / `*ngFor` は使わない）
 - `@for` の `track` に `repo.id` を指定し、DOM の再利用を最適化
-- Tailwind CSS のユーティリティクラスで oklch テーマ変数（`text-muted-foreground`, `border-border` 等）を使用
-- `role="list"` でアクセシビリティを確保
+- `hlmCard` でリポジトリ各行をカードとして表示し、空状態もカードで統一感を持たせる
+- `hlmAlert` + `variant="destructive"` でエラー表示（アイコン・タイトル・説明の構造化）
+- `hlm-alert-dialog` で削除前の確認ダイアログを表示（誤操作防止、AC8 の確認ダイアログ要件に対応）
+- `hlm-spinner` でローディング中・削除中のフィードバックを提供
+- `ng-icon` + `hlm` で Lucide アイコン（`lucidePlus`, `lucideTrash2`, `lucideTriangleAlert`）を使用
 - 削除ボタンは `deletingIds` で disabled 制御し、二重クリックを防止
 
 #### `src/app/repos/repo-add-form.ts` — リポジトリ追加フォーム
@@ -339,7 +421,7 @@ export class RepoListComponent implements OnInit {
   selector: 'app-repo-add-form',
   standalone: true,
   templateUrl: './repo-add-form.html',
-  imports: [HlmButtonImports],
+  imports: [HlmButtonImports, HlmCardImports, HlmFieldImports, HlmInputImports, HlmSpinnerImports],
 })
 export class RepoAddFormComponent {
   private readonly repoService = inject(RepositoryService);
@@ -406,54 +488,62 @@ export class RepoAddFormComponent {
 #### `src/app/repos/repo-add-form.html` — 追加フォームテンプレート
 
 ```html
-<form
-  class="border-border mb-6 rounded-lg border p-4"
-  (submit)="onSubmit(); $event.preventDefault()"
->
-  <div class="mb-3">
-    <label for="remote-url" class="mb-1 block text-sm font-medium"> リポジトリ URL </label>
-    <input
-      id="remote-url"
-      type="text"
-      class="border-input bg-background placeholder:text-muted-foreground focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
-      placeholder="https://github.com/org/repo.git"
-      [value]="remoteUrl()"
-      (input)="remoteUrl.set($any($event.target).value)"
-      [disabled]="submitting()"
-      autocomplete="url"
-    />
-  </div>
-
-  <!-- エラー表示 -->
-  @if (errorMessage()) {
-  <p class="text-destructive mb-3 text-sm" role="alert">{{ errorMessage() }}</p>
-  }
-
-  <div class="flex gap-2">
-    <button hlmBtn type="submit" [disabled]="submitting()">
-      @if (submitting()) { クローン中... } @else { 登録 }
-    </button>
-    <button
-      hlmBtn
-      variant="outline"
-      type="button"
-      [disabled]="submitting()"
-      (click)="cancelled.emit()"
-    >
-      キャンセル
-    </button>
-  </div>
-</form>
+<section hlmCard class="mb-6">
+  <form (submit)="onSubmit(); $event.preventDefault()">
+    <div hlmCardHeader>
+      <h3 hlmCardTitle>リポジトリを追加</h3>
+      <p hlmCardDescription>
+        リモートリポジトリの URL を入力してください。HTTPS と SSH 形式に対応しています。
+      </p>
+    </div>
+    <div hlmCardContent>
+      <div hlmField [attr.data-invalid]="errorMessage() ? true : null">
+        <label hlmFieldLabel for="remote-url">リポジトリ URL</label>
+        <input
+          hlmInput
+          id="remote-url"
+          type="text"
+          placeholder="https://github.com/org/repo.git"
+          [value]="remoteUrl()"
+          (input)="remoteUrl.set($any($event.target).value)"
+          [disabled]="submitting()"
+          [attr.aria-invalid]="errorMessage() ? true : null"
+          autocomplete="url"
+        />
+        @if (errorMessage()) {
+        <hlm-field-error>{{ errorMessage() }}</hlm-field-error>
+        }
+      </div>
+    </div>
+    <div hlmCardFooter class="flex gap-2">
+      <button hlmBtn type="submit" [disabled]="submitting()">
+        @if (submitting()) {
+        <hlm-spinner class="mr-1 text-xs" />
+        クローン中... } @else { 登録 }
+      </button>
+      <button
+        hlmBtn
+        variant="outline"
+        type="button"
+        [disabled]="submitting()"
+        (click)="cancelled.emit()"
+      >
+        キャンセル
+      </button>
+    </div>
+  </form>
+</section>
 ```
 
 **設計ポイント**:
 
+- `hlmCard` + `hlmCardHeader` / `hlmCardContent` / `hlmCardFooter` でフォーム全体を構造化
+- `hlmField` + `hlmFieldLabel` + `hlmInput` + `hlm-field-error` で spartan-ng のフォームフィールドパターンを使用
+- `data-invalid` 属性で `hlmField` をエラー状態に切り替え、`aria-invalid` でアクセシビリティを確保
+- `hlm-spinner` で送信中のフィードバックをボタン内に表示
 - `<form>` タグで囲み、Enter キーでの送信に対応
 - `$event.preventDefault()` でフォームのデフォルト送信を抑止
-- `<label>` と `for` / `id` の紐付けでアクセシビリティを確保
-- `role="alert"` でエラーメッセージをスクリーンリーダーに通知
 - `autocomplete="url"` でブラウザの URL 補完を有効化
-- `placeholder` で入力例を提示
 - シグナルベースの双方向バインディング: `[value]` + `(input)` で実現（`FormsModule` / `ReactiveFormsModule` は不使用）
 
 #### `src/app/app.routes.ts` — ルーティング変更
@@ -558,7 +648,9 @@ export class App {}
 - [ ] リポジトリが0件の場合に空状態メッセージが表示される
 - [ ] 「追加」ボタンクリックで `RepoAddFormComponent` が表示される
 - [ ] 「キャンセル」ボタンクリックで追加フォームが非表示になる
-- [ ] 削除ボタンクリックで `RepositoryService.removeRepository()` が呼ばれる
+- [ ] 削除ボタンクリックで確認ダイアログが表示される
+- [ ] 確認ダイアログで「削除する」をクリックすると `RepositoryService.removeRepository()` が呼ばれる
+- [ ] 確認ダイアログで「キャンセル」をクリックするとダイアログが閉じ、削除されない
 - [ ] 削除成功時にリポジトリが一覧から消える
 - [ ] 削除失敗時にエラーメッセージが表示される
 - [ ] 削除中はボタンが disabled になり「削除中...」と表示される
@@ -624,9 +716,12 @@ TestBed.configureTestingModule({
 
 ### アクセシビリティ
 
-- `<label>` と `for` / `id` の紐付けによるフォームアクセシビリティ
-- `role="alert"` によるエラーメッセージのスクリーンリーダー通知
-- `role="list"` によるリスト構造の明示
+- `hlmField` + `hlmFieldLabel` による `role="group"` 出力とラベル紐付け
+- `hlm-field-error` によるバリデーションエラーのアクセシブルな通知
+- `data-invalid` + `aria-invalid` によるエラー状態の明示
+- `hlm-alert-dialog` による削除確認のモーダルダイアログ（フォーカストラップ・ESC キー閉じ対応）
+- `hlmAlertIcon` によるアラートアイコンのアクセシブルな表示
+- `hlm-spinner` の `aria-label="Loading"` によるスクリーンリーダー対応
 - `disabled` 属性による操作不可状態の明示
 - キーボード操作: `<form>` + `<button type="submit">` で Enter キー送信に対応
 
@@ -638,6 +733,7 @@ TestBed.configureTestingModule({
 
 ## 更新履歴
 
-| 日付       | 内容     |
-| ---------- | -------- |
-| 2026-02-09 | 初版作成 |
+| 日付       | 内容                                                                                          |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| 2026-02-09 | 初版作成                                                                                      |
+| 2026-02-09 | spartan-ng コンポーネント活用に変更（card, alert, alert-dialog, field, input, spinner, icon） |
