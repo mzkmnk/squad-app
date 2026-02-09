@@ -56,7 +56,7 @@
                     <ng-icon hlm name="lucideTrash2" size="sm" />
                   }
                 </button>
-                <hlm-alert-dialog-content *hlmAlertDialogPortal>
+                <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
                   <hlm-alert-dialog-header>
                     <h2 hlmAlertDialogTitle>リポジトリを削除しますか？</h2>
                     <p hlmAlertDialogDescription>
@@ -65,7 +65,7 @@
                     </p>
                   </hlm-alert-dialog-header>
                   <hlm-alert-dialog-footer>
-                    <button hlmAlertDialogCancel>キャンセル</button>
+                    <button hlmAlertDialogCancel (click)="ctx.close()">キャンセル</button>
                     <button hlmAlertDialogAction (click)="removeRepository(repo.id)">
                       削除する
                     </button>
