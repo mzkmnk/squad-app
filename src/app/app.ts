@@ -8,7 +8,21 @@ import {
   lucidePlus,
 } from '@ng-icons/lucide';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
-import { HlmSidebarImports } from '@spartan-ng/helm/sidebar';
+import {
+  HlmSidebar,
+  HlmSidebarContent,
+  HlmSidebarGroup,
+  HlmSidebarGroupContent,
+  HlmSidebarGroupLabel,
+  HlmSidebarHeader,
+  HlmSidebarInset,
+  HlmSidebarMenu,
+  HlmSidebarMenuButton,
+  HlmSidebarMenuItem,
+  HlmSidebarRail,
+  HlmSidebarTrigger,
+  HlmSidebarWrapper,
+} from '@spartan-ng/helm/sidebar';
 import { HlmToasterImports } from '@spartan-ng/helm/sonner';
 
 @Component({
@@ -19,7 +33,19 @@ import { HlmToasterImports } from '@spartan-ng/helm/sonner';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    ...HlmSidebarImports,
+    HlmSidebar,
+    HlmSidebarContent,
+    HlmSidebarGroup,
+    HlmSidebarGroupContent,
+    HlmSidebarGroupLabel,
+    HlmSidebarHeader,
+    HlmSidebarInset,
+    HlmSidebarMenu,
+    HlmSidebarMenuButton,
+    HlmSidebarMenuItem,
+    HlmSidebarRail,
+    HlmSidebarTrigger,
+    HlmSidebarWrapper,
     ...HlmIconImports,
     ...HlmToasterImports,
   ],
