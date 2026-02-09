@@ -1,0 +1,114 @@
+<div class="mx-auto max-w-6xl p-6">
+  <!-- ヘッダー -->
+  <div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Dashboard</h1>
+    <div class="flex gap-2">
+      <button hlmBtn variant="outline" (click)="navigateToRepos()">リポジトリ管理</button>
+      <button hlmBtn (click)="navigateToCreate()">
+        <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
+        Workspace を作成
+      </button>
+    </div>
+  </div>
+
+  <!-- ローディング -->
+  @if (loading()) {
+    <div class="flex items-center justify-center gap-2 py-8">
+      <hlm-spinner />
+      <span class="text-muted-foreground text-sm">読み込み中...</span>
+    </div>
+  } @else {
+    <!-- Workspace 一覧 -->
+    @if (workspaces().length === 0) {
+      <section hlmCard class="text-center">
+        <div hlmCardHeader>
+          <h3 hlmCardTitle>Workspace がありません</h3>
+          <p hlmCardDescription>
+            「Workspace を作成」ボタンから新しい Workspace を作成してください。
+          </p>
+        </div>
+      </section>
+    } @else {
+      <div class="flex flex-col gap-4" role="list">
+        @for (ws of workspaces(); track ws.id) {
+          <div hlmCard role="listitem" class="p-4">
+            <div class="flex items-start justify-between gap-4">
+              <!-- Workspace 情報 -->
+              <div class="min-w-0 flex-1">
+                <h3 class="truncate text-lg font-semibold">{{ ws.name }}</h3>
+                <p class="text-muted-foreground mb-3 text-xs">
+                  作成日: {{ ws.createdAt | date: 'yyyy/MM/dd HH:mm' }}
+                </p>
+
+                <!-- リポジトリ × ブランチ構成 -->
+                <div class="flex flex-wrap gap-2">
+                  @for (entry of ws.entries; track entry.repositoryId) {
+                    <span
+                      class="bg-muted inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs"
+                    >
+                      <span class="font-medium">{{ getRepoName(entry.repositoryId) }}</span>
+                      <ng-icon hlm name="lucideGitBranch" size="xs" class="text-muted-foreground" />
+                      <span class="text-muted-foreground">{{ entry.branch }}</span>
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <!-- アクションボタン -->
+              <div class="flex shrink-0 gap-2">
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  (click)="openWorkspace(ws.id)"
+                  [disabled]="openingIds().has(ws.id) || deletingIds().has(ws.id)"
+                  aria-label="VS Code で開く"
+                >
+                  @if (openingIds().has(ws.id)) {
+                    <hlm-spinner class="mr-1 text-xs" />
+                    起動中...
+                  } @else {
+                    <ng-icon hlm name="lucideExternalLink" size="sm" class="mr-1" />
+                    Open
+                  }
+                </button>
+
+                <hlm-alert-dialog>
+                  <button
+                    hlmAlertDialogTrigger
+                    hlmBtn
+                    variant="destructive"
+                    size="sm"
+                    [disabled]="deletingIds().has(ws.id) || openingIds().has(ws.id)"
+                    aria-label="削除"
+                  >
+                    @if (deletingIds().has(ws.id)) {
+                      <hlm-spinner class="text-xs" />
+                    } @else {
+                      <ng-icon hlm name="lucideTrash2" size="sm" />
+                    }
+                  </button>
+                  <hlm-alert-dialog-content *hlmAlertDialogPortal>
+                    <hlm-alert-dialog-header>
+                      <h2 hlmAlertDialogTitle>Workspace を削除しますか？</h2>
+                      <p hlmAlertDialogDescription>
+                        「{{ ws.name }}」を削除すると、関連する Worktree と .code-workspace
+                        ファイルがディスクから完全に消去されます。 この操作は取り消せません。
+                      </p>
+                    </hlm-alert-dialog-header>
+                    <hlm-alert-dialog-footer>
+                      <button hlmAlertDialogCancel>キャンセル</button>
+                      <button hlmAlertDialogAction (click)="deleteWorkspace(ws.id)">
+                        削除する
+                      </button>
+                    </hlm-alert-dialog-footer>
+                  </hlm-alert-dialog-content>
+                </hlm-alert-dialog>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
