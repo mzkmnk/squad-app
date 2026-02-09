@@ -54,10 +54,6 @@ export class RepoListComponent {
     this.repositories.update((repos) => [...repos, repo]);
   }
 
-  protected onDialogClosed(): void {
-    // ダイアログが閉じた時の後処理（必要に応じて拡張）
-  }
-
   protected async removeRepository(id: string): Promise<void> {
     this.deletingIds.update((ids) => new Set([...ids, id]));
 
