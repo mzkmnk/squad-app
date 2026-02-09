@@ -8,8 +8,8 @@ Workspace 作成フローの Angular コンポーネント（WorkspaceCreateComp
 
 ### 1. spartan-ng UI コンポーネントのインストール
 
-- [ ] `ng g @spartan-ng/cli:ui select` で Select コンポーネントをインストール
-- [ ] `ng g @spartan-ng/cli:ui checkbox` で Checkbox コンポーネントをインストール
+- [x] `ng g @spartan-ng/cli:ui select` で Select コンポーネントをインストール
+- [x] `ng g @spartan-ng/cli:ui checkbox` で Checkbox コンポーネントをインストール
 
 ### 2. WorkspaceService の実装
 
