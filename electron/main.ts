@@ -11,17 +11,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null;
 
-async function createWindow() {
-  // サービス初期化
+async function initializeServices(): Promise<void> {
   const paths = createSquadPaths();
   const store = new SquadStore();
   await store.initialize();
   const gitService = new GitService(paths);
   const codeWorkspaceService = new CodeWorkspaceService(paths);
 
-  // IPC ハンドラー登録
   registerIpcHandlers({ store, gitService, codeWorkspaceService, paths });
+}
 
+function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -46,10 +46,14 @@ async function createWindow() {
 }
 
 app.on('ready', () => {
-  createWindow().catch((error: unknown) => {
-    console.error('Failed to create window:', error);
-    app.quit();
-  });
+  initializeServices()
+    .then(() => {
+      createWindow();
+    })
+    .catch((error: unknown) => {
+      console.error('Failed to initialize services:', error);
+      app.quit();
+    });
 });
 
 app.on('window-all-closed', () => {
@@ -60,9 +64,7 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    createWindow().catch((error: unknown) => {
-      console.error('Failed to create window:', error);
-    });
+    createWindow();
   }
 });
 

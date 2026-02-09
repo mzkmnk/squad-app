@@ -21,6 +21,8 @@
  * }
  * ```
  */
+// TODO: error.code を string から IpcErrorCode 型に変更して型安全性を強化する
+//       （循環参照を避けるため IpcErrorCode 型を types/ ディレクトリに移動する必要あり）
 export type IpcResult<T> =
   | { success: true; data: T }
   | { success: false; error: { code: string; message: string } };

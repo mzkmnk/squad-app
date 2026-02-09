@@ -45,6 +45,8 @@ interface CreatedWorktree {
  * extractRepoName('https://github.com/org/repo');         // => 'repo'
  * ```
  */
+// TODO: セキュリティ強化 — file:// や javascript: 等の危険なスキームを拒否するホワイトリストチェックを追加する
+// TODO: URL パースエラー時に INTERNAL_ERROR ではなく VALIDATION_ERROR を返すよう GitValidationError に変換する
 export function extractRepoName(remoteUrl: string): string {
   let pathPart: string;
   if (remoteUrl.startsWith('git@') && remoteUrl.includes(':')) {
@@ -146,6 +148,8 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
         if (!repo) {
           return notFoundResult('Repository', id);
         }
+        // TODO: このリポジトリを参照している Workspace が存在する場合、削除を拒否するか
+        //       カスケード削除を実装する（孤立 Worktree の防止）
         await gitService.removeBareRepository(repo.name);
         await store.removeRepository(id);
         return successResult(null);
@@ -219,6 +223,8 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
       _event,
       { name, entries }: { name: string; entries: { repositoryId: string; branch: string }[] },
     ): Promise<IpcResult<Workspace>> => {
+      // TODO: セキュリティ強化 — name に ../ や特殊文字が含まれた場合のパストラバーサルを防止するため、
+      //       英数字・ハイフン・アンダースコアのみ許可するバリデーションを追加する
       // 1. 各 entry の repositoryId を解決
       const resolvedEntries: ResolvedWorkspaceEntry[] = [];
       for (const entry of entries) {
@@ -265,7 +271,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
           try {
             await gitService.removeWorktree(wt.repoName, wt.workspaceName);
           } catch {
-            // ロールバック中のエラーは無視（ベストエフォート）
+            // TODO: ロールバック失敗時に console.error でログ出力を追加する（不整合状態のデバッグ用）
           }
         }
 
@@ -274,14 +280,14 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
           try {
             await codeWorkspaceService.remove(workspace.name);
           } catch {
-            // ベストエフォート
+            // TODO: ロールバック失敗時に console.error でログ出力を追加する
           }
 
           // ストアから Workspace を削除
           try {
             await store.removeWorkspace(workspace.id);
           } catch {
-            // ベストエフォート
+            // TODO: ロールバック失敗時に console.error でログ出力を追加する
           }
         }
 
