@@ -1,20 +1,11 @@
-import { Component, signal } from '@angular/core';
-import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { HlmToasterImports } from '@spartan-ng/helm/sonner';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
-  imports: [HlmButtonImports],
+  imports: [RouterOutlet, ...HlmToasterImports],
 })
-export class App {
-  protected readonly title = signal('squad-app');
-
-  readonly message = signal<string>('');
-
-  // test code
-  async testIPC() {
-    const response = await window.electronAPI.ping();
-    this.message.set(response);
-  }
-}
+export class App {}
