@@ -8,7 +8,7 @@
   "scripts": {
     "ng": "ng",
     "build": "ng build",
-    "electron:build": "tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json",
+    "electron:build": "tsc -p electron/tsconfig.json && node electron/build-preload.mjs",
     "electron:serve": "pnpm electron:build && electron .",
     "package": "pnpm build && pnpm electron:build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
     "package:mac": "pnpm package --mac",
@@ -76,6 +76,7 @@
     "angular-eslint": "^21.2.0",
     "electron": "^40.2.1",
     "electron-builder": "^26.7.0",
+    "esbuild": "^0.27.3",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "happy-dom": "^20.5.0",
