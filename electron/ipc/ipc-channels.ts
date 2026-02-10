@@ -13,6 +13,11 @@
  * ```
  */
 export const IpcChannels = {
+  // 共通
+
+  /** 疎通確認用 ping */
+  PING: 'ping',
+
   // リポジトリ操作
 
   /** 登録済みリポジトリ一覧を取得する */

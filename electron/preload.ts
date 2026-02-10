@@ -11,7 +11,7 @@
  *
  * @remarks ビルドについて
  * sandbox 環境の preload は ESM import が使えないため、
- * esbuild でバンドルして単一 CJS ファイルとして出力する（`scripts/build-preload.mjs`）。
+ * esbuild でバンドルして単一 CJS ファイルとして出力する（`electron/build-preload.mjs`）。
  * これにより `IpcChannels` 定数を直接 import でき、チャネル名の二重定義を排除している。
  *
  * @see {@link ElectronAPI} レンダラー側から参照される型定義（`electron/types/electron-api.ts`）
@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
    * @remarks 開発・デバッグ用途。メインプロセスとの IPC 通信が正常に動作するか確認する。
    * @returns メインプロセスからの応答文字列
    */
-  ping: () => ipcRenderer.invoke('ping'),
+  ping: () => ipcRenderer.invoke(IpcChannels.PING),
 
   // ---------------------------------------------------------------------------
   // リポジトリ操作

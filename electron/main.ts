@@ -68,4 +68,6 @@ app.on('activate', () => {
   }
 });
 
-ipcMain.handle('ping', () => 'pong');
+import { IpcChannels } from './ipc/ipc-channels.js';
+
+ipcMain.handle(IpcChannels.PING, () => 'pong');
