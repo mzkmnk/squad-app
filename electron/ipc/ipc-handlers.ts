@@ -18,6 +18,8 @@ interface ResolvedWorkspaceEntry {
   repo: Repository;
   /** チェックアウト対象のブランチ名 */
   branch: string;
+  /** 新規ブランチの起点ブランチ名 */
+  sourceBranch?: string;
 }
 
 /** ロールバック時に削除対象となる作成済み Worktree の識別情報 */
@@ -221,7 +223,13 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
     IpcChannels.WORKSPACE_CREATE,
     async (
       _event,
-      { name, entries }: { name: string; entries: { repositoryId: string; branch: string }[] },
+      {
+        name,
+        entries,
+      }: {
+        name: string;
+        entries: { repositoryId: string; branch: string; sourceBranch?: string }[];
+      },
     ): Promise<IpcResult<Workspace>> => {
       // TODO: セキュリティ強化 — name に ../ や特殊文字が含まれた場合のパストラバーサルを防止するため、
       //       英数字・ハイフン・アンダースコアのみ許可するバリデーションを追加する
@@ -232,7 +240,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
         if (!repo) {
           return notFoundResult('Repository', entry.repositoryId);
         }
-        resolvedEntries.push({ repo, branch: entry.branch });
+        resolvedEntries.push({ repo, branch: entry.branch, sourceBranch: entry.sourceBranch });
       }
 
       // 作成済み Worktree を追跡（ロールバック用）
@@ -245,7 +253,12 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
         // 3. 各エントリに対して Worktree を作成
         for (const resolved of resolvedEntries) {
-          await gitService.addWorktree(resolved.repo.name, workspace.name, resolved.branch);
+          await gitService.addWorktree(
+            resolved.repo.name,
+            workspace.name,
+            resolved.branch,
+            resolved.sourceBranch,
+          );
           createdWorktrees.push({
             repoName: resolved.repo.name,
             workspaceName: workspace.name,

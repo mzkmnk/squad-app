@@ -246,8 +246,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
    * }
    * ```
    */
-  createWorkspace: (name: string, entries: { repositoryId: string; branch: string }[]) =>
-    ipcRenderer.invoke('workspace:create', { name, entries }),
+  createWorkspace: (
+    name: string,
+    entries: { repositoryId: string; branch: string; sourceBranch?: string }[],
+  ) => ipcRenderer.invoke('workspace:create', { name, entries }),
 
   /**
    * 指定された ID の Workspace を削除する。

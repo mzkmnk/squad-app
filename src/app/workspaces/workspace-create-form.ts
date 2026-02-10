@@ -212,22 +212,20 @@ export class WorkspaceCreateFormComponent {
     return valid;
   }
 
-  /**
-   * branchSelections から createWorkspace 用の entries を構築する。
-   *
-   * 現時点では既存の IPC インターフェース（{ repositoryId, branch }）に合わせて変換する。
-   * Unit 4 で IPC 型が拡張された後、新規ブランチの場合は sourceBranch 情報も
-   * entries に含めるように変更する。
-   */
-  private buildEntries(): { repositoryId: string; branch: string }[] {
+  private buildEntries(): { repositoryId: string; branch: string; sourceBranch?: string }[] {
     return [...this.selectedRepoIds()].map((repoId) => {
       const selection = this.branchSelections().get(repoId);
       if (!selection) {
         throw new Error(`Branch selection not found for repository: ${repoId}`);
       }
-      const branch =
-        selection.type === 'existing' ? selection.branch : selection.newBranchInfo.newBranchName;
-      return { repositoryId: repoId, branch };
+      if (selection.type === 'existing') {
+        return { repositoryId: repoId, branch: selection.branch };
+      }
+      return {
+        repositoryId: repoId,
+        branch: selection.newBranchInfo.newBranchName,
+        sourceBranch: selection.newBranchInfo.sourceBranch,
+      };
     });
   }
 

@@ -89,6 +89,7 @@ function createMockDeps(): IpcHandlerDeps {
       removeWorktree: vi.fn(),
       fetch: vi.fn(),
       getRemoteBranches: vi.fn(),
+      createBranch: vi.fn(),
     } as unknown as IpcHandlerDeps['gitService'],
     codeWorkspaceService: {
       generate: vi.fn(),
@@ -460,6 +461,7 @@ describe('workspace:create', () => {
       'backend',
       'feature-payment-abcd1234',
       'feature/payment',
+      undefined,
     );
     expect(deps.codeWorkspaceService.generate).toHaveBeenCalledWith('feature-payment-abcd1234', [
       { repoName: 'backend' },
@@ -543,6 +545,117 @@ describe('workspace:create', () => {
     expect(result).toEqual({
       success: false,
       error: { code: IpcErrorCode.GIT_OPERATION_FAILED, message: 'err' },
+    });
+  });
+
+  it('sourceBranch 未指定のエントリは addWorktree が sourceBranch=undefined で呼ばれる', async () => {
+    const repo = makeRepo();
+    const ws = makeWorkspace();
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.addWorktree).mockResolvedValue('feature/payment-abcd1234');
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    await invoke('workspace:create', {
+      name: 'feature-payment',
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
+    });
+
+    expect(deps.gitService.addWorktree).toHaveBeenCalledWith(
+      'backend',
+      ws.name,
+      'feature/payment',
+      undefined,
+    );
+  });
+
+  it('sourceBranch 指定のエントリは addWorktree が sourceBranch 付きで呼ばれる', async () => {
+    const repo = makeRepo();
+    const ws = makeWorkspace();
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.addWorktree).mockResolvedValue('feature/new-abcd1234');
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    await invoke('workspace:create', {
+      name: 'feature-payment',
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/new', sourceBranch: 'develop' }],
+    });
+
+    expect(deps.gitService.addWorktree).toHaveBeenCalledWith(
+      'backend',
+      ws.name,
+      'feature/new',
+      'develop',
+    );
+  });
+
+  it('混在エントリ（既存ブランチ + 新規ブランチ）が正しく処理される', async () => {
+    const repo1 = makeRepo({ id: 'repo-1', name: 'backend' });
+    const repo2 = makeRepo({ id: 'repo-2', name: 'frontend' });
+    const ws = makeWorkspace({
+      entries: [
+        { repositoryId: 'repo-1', branch: 'main' },
+        { repositoryId: 'repo-2', branch: 'feature/new' },
+      ],
+    });
+
+    vi.mocked(deps.store.getRepository).mockResolvedValueOnce(repo1).mockResolvedValueOnce(repo2);
+    vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.addWorktree)
+      .mockResolvedValueOnce('main-11111111')
+      .mockResolvedValueOnce('feature/new-22222222');
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:create', {
+      name: 'feature-payment',
+      entries: [
+        { repositoryId: 'repo-1', branch: 'main' },
+        { repositoryId: 'repo-2', branch: 'feature/new', sourceBranch: 'develop' },
+      ],
+    });
+
+    expect(deps.gitService.addWorktree).toHaveBeenNthCalledWith(
+      1,
+      'backend',
+      ws.name,
+      'main',
+      undefined,
+    );
+    expect(deps.gitService.addWorktree).toHaveBeenNthCalledWith(
+      2,
+      'frontend',
+      ws.name,
+      'feature/new',
+      'develop',
+    );
+    expect(result).toEqual({ success: true, data: ws });
+  });
+
+  it('新規ブランチ作成失敗時にロールバックが実行される', async () => {
+    const repo = makeRepo();
+    const ws = makeWorkspace();
+
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.addWorktree).mockRejectedValue(
+      new GitOperationError('branch create failed', 128, 'fatal: not a valid ref'),
+    );
+    vi.mocked(deps.codeWorkspaceService.remove).mockResolvedValue(undefined);
+    vi.mocked(deps.store.removeWorkspace).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:create', {
+      name: 'feature-payment',
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/new', sourceBranch: 'nonexistent' }],
+    });
+
+    expect(deps.store.removeWorkspace).toHaveBeenCalledWith(ws.id);
+    expect(result).toEqual({
+      success: false,
+      error: {
+        code: IpcErrorCode.GIT_OPERATION_FAILED,
+        message: 'fatal: not a valid ref',
+      },
     });
   });
 });

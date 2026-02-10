@@ -53,9 +53,32 @@ export class GitService {
     await fs.rm(repoDir, { recursive: true, force: true });
   }
 
+  /**
+   * 起点ブランチから新規ブランチを作成する。
+   *
+   * @param repoName - Bare Repository 名（suffix 付き）
+   * @param newBranch - 作成するブランチ名
+   * @param sourceBranch - 起点ブランチ名（例: develop）
+   */
+  async createBranch(repoName: string, newBranch: string, sourceBranch: string): Promise<void> {
+    validateBranchName(newBranch);
+    validateBranchName(sourceBranch);
+
+    const repoDir = this.paths.repoDir(repoName);
+    await this.execGit(['branch', newBranch, sourceBranch], repoDir);
+  }
+
   /** 指定ブランチの Worktree を作成する。suffix 付きブランチ名を返す */
-  async addWorktree(repoName: string, workspaceName: string, branch: string): Promise<string> {
+  async addWorktree(
+    repoName: string,
+    workspaceName: string,
+    branch: string,
+    sourceBranch?: string,
+  ): Promise<string> {
     validateBranchName(branch);
+    if (sourceBranch !== undefined) {
+      validateBranchName(sourceBranch);
+    }
 
     const repoDir = this.paths.repoDir(repoName);
     const worktreeDir = this.paths.worktreeDir(workspaceName, repoName);
@@ -68,8 +91,8 @@ export class GitService {
       const actualBranch = appendSuffix(branch, suffix);
 
       try {
-        // suffix 付きローカルブランチを作成（元ブランチから分岐）
-        await this.execGit(['branch', actualBranch, branch], repoDir);
+        // createBranch() に委譲（sourceBranch 省略時は branch 自身が起点）
+        await this.createBranch(repoName, actualBranch, sourceBranch ?? branch);
       } catch {
         // ブランチ名が重複した場合はリトライ
         continue;
