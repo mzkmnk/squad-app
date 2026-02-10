@@ -3,6 +3,17 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as fs from 'node:fs/promises';
 import { IpcChannels } from './ipc-channels.js';
+import type {
+  RepoAddRequest,
+  RepoGetRequest,
+  RepoRemoveRequest,
+  RepoBranchesRequest,
+  RepoFetchRequest,
+  WorkspaceGetRequest,
+  WorkspaceCreateRequest,
+  WorkspaceDeleteRequest,
+  WorkspaceOpenRequest,
+} from './ipc-channels.js';
 import type { IpcResult } from '../types/ipc-result.js';
 import { mapErrorToIpcResult, notFoundResult, successResult } from './ipc-error-mapper.js';
 import type { SquadStore } from '../store/squad-store.js';
@@ -107,7 +118,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
   ipcMain.handle(
     IpcChannels.REPO_GET,
-    async (_event, { id }: { id: string }): Promise<IpcResult<Repository>> => {
+    async (_event, { id }: RepoGetRequest): Promise<IpcResult<Repository>> => {
       try {
         const repo = await store.getRepository(id);
         if (!repo) {
@@ -122,7 +133,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
   ipcMain.handle(
     IpcChannels.REPO_ADD,
-    async (_event, { remoteUrl }: { remoteUrl: string }): Promise<IpcResult<Repository>> => {
+    async (_event, { remoteUrl }: RepoAddRequest): Promise<IpcResult<Repository>> => {
       let actualName: string | undefined;
       try {
         const repoName = extractRepoName(remoteUrl);
@@ -145,7 +156,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
   ipcMain.handle(
     IpcChannels.REPO_REMOVE,
-    async (_event, { id }: { id: string }): Promise<IpcResult<null>> => {
+    async (_event, { id }: RepoRemoveRequest): Promise<IpcResult<null>> => {
       try {
         const repo = await store.getRepository(id);
         if (!repo) {
@@ -164,7 +175,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
   ipcMain.handle(
     IpcChannels.REPO_BRANCHES,
-    async (_event, { id }: { id: string }): Promise<IpcResult<string[]>> => {
+    async (_event, { id }: RepoBranchesRequest): Promise<IpcResult<string[]>> => {
       try {
         const repo = await store.getRepository(id);
         if (!repo) {
@@ -180,7 +191,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
   ipcMain.handle(
     IpcChannels.REPO_FETCH,
-    async (_event, { id }: { id: string }): Promise<IpcResult<null>> => {
+    async (_event, { id }: RepoFetchRequest): Promise<IpcResult<null>> => {
       try {
         const repo = await store.getRepository(id);
         if (!repo) {
@@ -207,7 +218,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
   ipcMain.handle(
     IpcChannels.WORKSPACE_GET,
-    async (_event, { id }: { id: string }): Promise<IpcResult<Workspace>> => {
+    async (_event, { id }: WorkspaceGetRequest): Promise<IpcResult<Workspace>> => {
       try {
         const ws = await store.getWorkspace(id);
         if (!ws) {
@@ -222,16 +233,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
   ipcMain.handle(
     IpcChannels.WORKSPACE_CREATE,
-    async (
-      _event,
-      {
-        name,
-        entries,
-      }: {
-        name: string;
-        entries: { repositoryId: string; branch: string; sourceBranch?: string }[];
-      },
-    ): Promise<IpcResult<Workspace>> => {
+    async (_event, { name, entries }: WorkspaceCreateRequest): Promise<IpcResult<Workspace>> => {
       // TODO: セキュリティ強化 — name に ../ や特殊文字が含まれた場合のパストラバーサルを防止するため、
       //       英数字・ハイフン・アンダースコアのみ許可するバリデーションを追加する
       // 1. 各 entry の repositoryId を解決
@@ -312,7 +314,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
   ipcMain.handle(
     IpcChannels.WORKSPACE_DELETE,
-    async (_event, { id }: { id: string }): Promise<IpcResult<null>> => {
+    async (_event, { id }: WorkspaceDeleteRequest): Promise<IpcResult<null>> => {
       try {
         const ws = await store.getWorkspace(id);
         if (!ws) {
@@ -357,7 +359,7 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
 
   ipcMain.handle(
     IpcChannels.WORKSPACE_OPEN,
-    async (_event, { id }: { id: string }): Promise<IpcResult<null>> => {
+    async (_event, { id }: WorkspaceOpenRequest): Promise<IpcResult<null>> => {
       try {
         const ws = await store.getWorkspace(id);
         if (!ws) {

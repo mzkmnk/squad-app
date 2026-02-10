@@ -119,6 +119,22 @@ export interface WorkspaceGetRequest {
 }
 
 /**
+ * {@link WorkspaceCreateRequest} の各エントリ。
+ *
+ * @remarks
+ * リポジトリ × ブランチの組み合わせを1つ表す。
+ * `sourceBranch` を指定すると、既存ブランチからの新規ブランチ作成になる。
+ */
+export interface WorkspaceCreateEntry {
+  /** 対象リポジトリの UUID */
+  repositoryId: string;
+  /** チェックアウト対象のブランチ名 */
+  branch: string;
+  /** 新規ブランチの起点ブランチ名。指定時は branch を sourceBranch から新規作成する */
+  sourceBranch?: string;
+}
+
+/**
  * `workspace:create` チャネルのリクエスト。
  *
  * @remarks
@@ -129,14 +145,7 @@ export interface WorkspaceCreateRequest {
   /** Workspace 名（UUID suffix が自動付与される） */
   name: string;
   /** Workspace に含めるリポジトリ × ブランチの構成 */
-  entries: {
-    /** 対象リポジトリの UUID */
-    repositoryId: string;
-    /** チェックアウト対象のブランチ名 */
-    branch: string;
-    /** 新規ブランチの起点ブランチ名。指定時は branch を sourceBranch から新規作成する */
-    sourceBranch?: string;
-  }[];
+  entries: WorkspaceCreateEntry[];
 }
 
 /**

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { Workspace } from '../../../electron/types/models';
 import type { IpcResult } from '../../../electron/types/ipc-result';
+import type { WorkspaceCreateEntry } from '../../../electron/ipc/ipc-channels';
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceService {
@@ -8,10 +9,7 @@ export class WorkspaceService {
     return window.electronAPI.getWorkspaces();
   }
 
-  createWorkspace(
-    name: string,
-    entries: { repositoryId: string; branch: string; sourceBranch?: string }[],
-  ): Promise<IpcResult<Workspace>> {
+  createWorkspace(name: string, entries: WorkspaceCreateEntry[]): Promise<IpcResult<Workspace>> {
     return window.electronAPI.createWorkspace(name, entries);
   }
 

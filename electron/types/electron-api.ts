@@ -10,6 +10,7 @@
 
 import type { Repository, Workspace } from './models';
 import type { IpcResult } from './ipc-result';
+import type { WorkspaceCreateEntry } from '../ipc/ipc-channels';
 
 /**
  * contextBridge.exposeInMainWorld で window.electronAPI に公開される API の型定義。
@@ -107,10 +108,7 @@ export interface ElectronAPI {
    * @param entries - Workspace に含めるリポジトリ × ブランチの構成配列
    * @returns 作成された Workspace 情報を含む IpcResult
    */
-  createWorkspace: (
-    name: string,
-    entries: { repositoryId: string; branch: string; sourceBranch?: string }[],
-  ) => Promise<IpcResult<Workspace>>;
+  createWorkspace: (name: string, entries: WorkspaceCreateEntry[]) => Promise<IpcResult<Workspace>>;
 
   /**
    * 指定 ID の Workspace を削除する。

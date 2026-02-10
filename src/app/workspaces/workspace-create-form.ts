@@ -18,6 +18,7 @@ import type { CreateBranchResult } from '../shared/create-branch-dialog/create-b
 import { RepositoryService } from '../services/repository.service';
 import { WorkspaceService } from '../services/workspace.service';
 import type { Repository, Workspace } from '../../../electron/types/models';
+import type { WorkspaceCreateEntry } from '../../../electron/ipc/ipc-channels';
 
 /** 新規ブランチ作成ダイアログからの戻り値 */
 export interface NewBranchInfo {
@@ -212,7 +213,7 @@ export class WorkspaceCreateFormComponent {
     return valid;
   }
 
-  private buildEntries(): { repositoryId: string; branch: string; sourceBranch?: string }[] {
+  private buildEntries(): WorkspaceCreateEntry[] {
     return [...this.selectedRepoIds()].map((repoId) => {
       const selection = this.branchSelections().get(repoId);
       if (!selection) {
