@@ -13,6 +13,8 @@ import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
 import { BranchComboboxComponent } from '../shared/branch-combobox/branch-combobox';
+import { CreateBranchDialogComponent } from '../shared/create-branch-dialog/create-branch-dialog';
+import type { CreateBranchResult } from '../shared/create-branch-dialog/create-branch-dialog-types';
 import { RepositoryService } from '../services/repository.service';
 import { WorkspaceService } from '../services/workspace.service';
 import type { Repository, Workspace } from '../../../electron/types/models';
@@ -37,6 +39,7 @@ export type BranchSelection =
   imports: [
     BrnDialogClose,
     BranchComboboxComponent,
+    CreateBranchDialogComponent,
     HlmButtonImports,
     HlmCardImports,
     HlmCheckboxImports,
@@ -159,17 +162,18 @@ export class WorkspaceCreateFormComponent {
     this.selectionError.set(null);
   }
 
-  /**
-   * 新規ブランチ作成ダイアログを開く。
-   *
-   * Unit 3 (create_branch_dialog) で実装されるダイアログを呼び出す。
-   * 現時点ではスタブとして定義し、Unit 3 統合時に実装を差し替える。
-   */
-  protected openCreateBranchDialog(repoId: string): void {
-    console.warn(`[TODO] Unit 3 で実装予定: CreateBranchDialog for repo ${repoId}`);
-    // TODO: Unit 3 で CreateBranchDialogComponent を実装後、
-    //       HlmDialogService を使ってダイアログを開き、
-    //       戻り値を setNewBranch() に渡す。
+  /** 新規ブランチ作成ダイアログの確定結果を処理する */
+  protected onBranchCreated(repoId: string, result: CreateBranchResult): void {
+    this.setNewBranch(repoId, {
+      sourceBranch: result.baseBranch,
+      newBranchName: result.newBranchName,
+    });
+  }
+
+  /** テンプレート用: リポジトリのデフォルトブランチを取得する */
+  protected getDefaultBranch(repoId: string): string {
+    const branches = this.branchesMap().get(repoId) ?? [];
+    return branches.includes('main') ? 'main' : (branches[0] ?? 'main');
   }
 
   /** テンプレート用: リポジトリの現在の選択ブランチ名を取得する */

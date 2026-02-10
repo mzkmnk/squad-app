@@ -76,17 +76,25 @@
                             (valueChange)="selectBranch(repo.id, $event)"
                           />
                         </div>
-                        <button
-                          hlmBtn
-                          variant="outline"
-                          size="sm"
-                          type="button"
-                          [disabled]="creating()"
-                          (click)="openCreateBranchDialog(repo.id)"
-                          aria-label="新規ブランチを作成"
-                        >
-                          <ng-icon hlm name="lucideGitBranchPlus" size="sm" />
-                        </button>
+                        <hlm-dialog>
+                          <button
+                            hlmBtn
+                            variant="outline"
+                            type="button"
+                            [disabled]="creating()"
+                            hlmDialogTrigger
+                            aria-label="新規ブランチを作成"
+                          >
+                            <ng-icon hlm name="lucideGitBranchPlus" size="sm" />
+                          </button>
+                          <hlm-dialog-content *hlmDialogPortal>
+                            <app-create-branch-dialog
+                              [branches]="branchesMap().get(repo.id) ?? []"
+                              [defaultBranch]="getDefaultBranch(repo.id)"
+                              (created)="onBranchCreated(repo.id, $event)"
+                            />
+                          </hlm-dialog-content>
+                        </hlm-dialog>
                       </div>
                     } @else {
                       <div class="flex items-center gap-2 py-1">
