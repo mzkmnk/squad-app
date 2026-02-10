@@ -8,5 +8,5 @@
     "strict": true
   },
   "include": ["**/*.ts"],
-  "exclude": ["preload.ts", "tsconfig.preload.json"]
+  "exclude": ["preload.ts", "tsconfig.preload.json", "types/electron-api.ts"]
 }

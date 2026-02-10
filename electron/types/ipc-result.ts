@@ -6,7 +6,7 @@
  * IPC 通信ではメインプロセスの例外がレンダラーに伝播しないため、
  * エラーを明示的にシリアライズして返す必要がある。
  *
- * メインプロセス（`ipc-channels.ts`）とレンダラー（`electron.d.ts`）の
+ * メインプロセス（`ipc-channels.ts`）とレンダラー（`electron-api.ts`）の
  * 両方から参照される共通型として `electron/types/` に配置している。
  *
  * @typeParam T - 成功時に返されるデータの型

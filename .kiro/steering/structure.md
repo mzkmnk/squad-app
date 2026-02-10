@@ -31,7 +31,7 @@ electron/                     # Electron メインプロセス
   types/                      # 共有型定義
     models.ts                 # エンティティ（Repository, Workspace）+ zod スキーマ
     ipc-result.ts             # IpcResult<T> 型（Discriminated Union）
-    electron.d.ts             # window.electronAPI の型定義（Angular 側から参照）
+    electron-api.ts           # window.electronAPI の型定義（Angular 側から参照）
 ```
 
 ## アーキテクチャパターン

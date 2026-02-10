@@ -12,11 +12,11 @@
  * @remarks チャネル名について
  * preload スクリプトはサンドボックス環境で実行されるため、
  * `electron/ipc/ipc-channels.ts` の `IpcChannels` 定数を直接 import しない。
- * チャネル名は文字列リテラルとして記述し、型安全性は `electron.d.ts` の
+ * チャネル名は文字列リテラルとして記述し、型安全性は `electron-api.ts` の
  * `ElectronAPI` インターフェースで担保する。
  * チャネル名の一致は `ipc-handlers.spec.ts` のテストで検証される。
  *
- * @see {@link ElectronAPI} レンダラー側から参照される型定義（`electron/electron.d.ts`）
+ * @see {@link ElectronAPI} レンダラー側から参照される型定義（`electron/electron-api.ts`）
  * @see {@link IpcChannels} メインプロセス側のチャネル名定数（`electron/ipc/ipc-channels.ts`）
  */
 import { contextBridge, ipcRenderer } from 'electron';

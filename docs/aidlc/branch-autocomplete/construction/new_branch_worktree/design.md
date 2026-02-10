@@ -118,7 +118,7 @@ electron/
 │   ├── ipc-channels.ts             # 変更: WorkspaceCreateRequest の entries 型拡張
 │   └── ipc-handlers.ts             # 変更: workspace:create ハンドラーで sourceBranch を渡す
 ├── types/
-│   ├── electron.d.ts               # 変更: createWorkspace の entries 型拡張
+│   ├── electron-api.ts               # 変更: createWorkspace の entries 型拡張
 │   └── models.ts                   # 変更なし
 ├── preload.ts                      # 変更: createWorkspace の entries 型拡張
 src/app/
@@ -135,7 +135,7 @@ src/app/
 | `electron/git/git-service.ts`                 | 修正     | `createBranch()` 追加、`addWorktree()` に `sourceBranch?` 引数追加 |
 | `electron/ipc/ipc-channels.ts`                | 修正     | `WorkspaceCreateRequest` の entries に `sourceBranch?` 追加        |
 | `electron/ipc/ipc-handlers.ts`                | 修正     | `workspace:create` ハンドラーで `sourceBranch` を渡す              |
-| `electron/types/electron.d.ts`                | 修正     | `createWorkspace` の entries 型に `sourceBranch?` 追加             |
+| `electron/types/electron-api.ts`              | 修正     | `createWorkspace` の entries 型に `sourceBranch?` 追加             |
 | `electron/preload.ts`                         | 修正     | `createWorkspace` の引数型に `sourceBranch?` 追加                  |
 | `src/app/services/workspace.service.ts`       | 修正     | `createWorkspace` の entries 型に `sourceBranch?` 追加             |
 | `src/app/workspaces/workspace-create-form.ts` | 修正     | `buildEntries()` で `sourceBranch` を含める                        |
@@ -315,7 +315,7 @@ await gitService.addWorktree(
 
 > **ロールバック処理**: 既存のロールバック処理（`removeWorktree` の逆順呼び出し）はそのまま動作する。新規ブランチで作成された worktree も `removeWorktree` で削除可能（worktree のパスは `repoName` + `workspaceName` で決定されるため、ブランチの作成方法に依存しない）。
 
-### 4. ElectronAPI 型定義の変更（electron.d.ts）
+### 4. ElectronAPI 型定義の変更（electron-api.ts）
 
 ```typescript
 // 変更前

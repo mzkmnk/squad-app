@@ -63,5 +63,5 @@ strict モードを完全に有効化:
 
 - メインプロセス: `electron/main.ts` — ウィンドウ作成、IPC ハンドラー
 - プリロード: `electron/preload.ts` — `contextBridge` 経由で安全な `window.electronAPI` ブリッジを提供
-- 型定義: `electron/electron.d.ts` — 共有 IPC 型定義
+- 型定義: `electron/electron-api.ts` — 共有 IPC 型定義
 - セキュリティ: `nodeIntegration: false`, `contextIsolation: true`
