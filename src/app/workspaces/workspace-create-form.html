@@ -67,20 +67,27 @@
                 @if (selectedRepoIds().has(repo.id)) {
                   <div class="mt-2">
                     @if (branchesMap().has(repo.id)) {
-                      <brn-select
-                        [value]="selectedBranches().get(repo.id) ?? ''"
-                        (valueChange)="selectBranch(repo.id, $any($event))"
-                        [disabled]="creating()"
-                      >
-                        <hlm-select-trigger class="w-full">
-                          <hlm-select-value placeholder="ブランチを選択..." />
-                        </hlm-select-trigger>
-                        <hlm-select-content>
-                          @for (branch of branchesMap().get(repo.id); track branch) {
-                            <hlm-option [value]="branch">{{ branch }}</hlm-option>
-                          }
-                        </hlm-select-content>
-                      </brn-select>
+                      <div class="flex items-start gap-2">
+                        <div class="min-w-0 flex-1">
+                          <app-branch-combobox
+                            [branches]="branchesMap().get(repo.id) ?? []"
+                            [value]="getSelectedBranchName(repo.id)"
+                            [disabled]="creating()"
+                            (valueChange)="selectBranch(repo.id, $event)"
+                          />
+                        </div>
+                        <button
+                          hlmBtn
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          [disabled]="creating()"
+                          (click)="openCreateBranchDialog(repo.id)"
+                          aria-label="新規ブランチを作成"
+                        >
+                          <ng-icon hlm name="lucideGitBranchPlus" size="sm" />
+                        </button>
+                      </div>
                     } @else {
                       <div class="flex items-center gap-2 py-1">
                         <hlm-spinner class="text-xs" />

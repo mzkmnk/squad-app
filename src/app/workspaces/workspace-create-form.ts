@@ -1,8 +1,7 @@
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { BrnDialogClose, BrnDialogRef } from '@spartan-ng/brain/dialog';
-import { BrnSelectImports } from '@spartan-ng/brain/select';
 import { provideIcons } from '@ng-icons/core';
-import { lucideLoader } from '@ng-icons/lucide';
+import { lucideGitBranchPlus, lucideLoader } from '@ng-icons/lucide';
 import { toast } from 'ngx-sonner';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
@@ -11,12 +10,25 @@ import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
 import { HlmInputImports } from '@spartan-ng/helm/input';
-import { HlmSelectImports } from '@spartan-ng/helm/select';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
+import { BranchComboboxComponent } from '../shared/branch-combobox/branch-combobox';
 import { RepositoryService } from '../services/repository.service';
 import { WorkspaceService } from '../services/workspace.service';
 import type { Repository, Workspace } from '../../../electron/types/models';
+
+/** 新規ブランチ作成ダイアログからの戻り値 */
+export interface NewBranchInfo {
+  /** 起点ブランチ名（例: develop） */
+  readonly sourceBranch: string;
+  /** 新規ブランチ名（例: feature/new-api） */
+  readonly newBranchName: string;
+}
+
+/** リポジトリごとのブランチ選択状態 */
+export type BranchSelection =
+  | { readonly type: 'existing'; readonly branch: string }
+  | { readonly type: 'new'; readonly newBranchInfo: Readonly<NewBranchInfo> };
 
 @Component({
   selector: 'app-workspace-create-form',
@@ -24,7 +36,7 @@ import type { Repository, Workspace } from '../../../electron/types/models';
   templateUrl: './workspace-create-form.html',
   imports: [
     BrnDialogClose,
-    BrnSelectImports,
+    BranchComboboxComponent,
     HlmButtonImports,
     HlmCardImports,
     HlmCheckboxImports,
@@ -32,11 +44,10 @@ import type { Repository, Workspace } from '../../../electron/types/models';
     HlmFieldImports,
     HlmIconImports,
     HlmInputImports,
-    HlmSelectImports,
     HlmSeparatorImports,
     HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideLoader })],
+  providers: [provideIcons({ lucideLoader, lucideGitBranchPlus })],
 })
 export class WorkspaceCreateFormComponent {
   private readonly repoService = inject(RepositoryService);
@@ -47,7 +58,7 @@ export class WorkspaceCreateFormComponent {
   protected readonly repositories = signal<Repository[]>([]);
   protected readonly selectedRepoIds = signal<Set<string>>(new Set());
   protected readonly branchesMap = signal<Map<string, string[]>>(new Map());
-  protected readonly selectedBranches = signal<Map<string, string>>(new Map());
+  protected readonly branchSelections = signal<Map<string, BranchSelection>>(new Map());
   protected readonly fetchingIds = signal<Set<string>>(new Set());
   protected readonly loadingRepos = signal(true);
   protected readonly creating = signal(false);
@@ -61,7 +72,11 @@ export class WorkspaceCreateFormComponent {
     if (this.workspaceName().trim().length === 0) return false;
     if (this.selectedRepoIds().size === 0) return false;
     for (const id of this.selectedRepoIds()) {
-      if (!this.selectedBranches().has(id)) return false;
+      const selection = this.branchSelections().get(id);
+      if (!selection) return false;
+      if (selection.type === 'new' && selection.newBranchInfo.newBranchName.trim().length === 0) {
+        return false;
+      }
     }
     return true;
   });
@@ -107,7 +122,7 @@ export class WorkspaceCreateFormComponent {
       const next = new Set(ids);
       if (next.has(repoId)) {
         next.delete(repoId);
-        this.selectedBranches.update((map) => {
+        this.branchSelections.update((map) => {
           const nextMap = new Map(map);
           nextMap.delete(repoId);
           return nextMap;
@@ -120,13 +135,48 @@ export class WorkspaceCreateFormComponent {
     this.selectionError.set(null);
   }
 
-  protected selectBranch(repoId: string, branch: string): void {
-    this.selectedBranches.update((map) => {
+  /** 既存ブランチを選択する（コンボボックスからの選択） */
+  protected selectBranch(repoId: string, branch: string | null): void {
+    this.branchSelections.update((map) => {
       const next = new Map(map);
-      next.set(repoId, branch);
+      if (branch === null) {
+        next.delete(repoId);
+      } else {
+        next.set(repoId, { type: 'existing', branch });
+      }
       return next;
     });
     this.selectionError.set(null);
+  }
+
+  /** 新規ブランチ情報を設定する（ダイアログからの戻り値） */
+  protected setNewBranch(repoId: string, info: NewBranchInfo): void {
+    this.branchSelections.update((map) => {
+      const next = new Map(map);
+      next.set(repoId, { type: 'new', newBranchInfo: info });
+      return next;
+    });
+    this.selectionError.set(null);
+  }
+
+  /**
+   * 新規ブランチ作成ダイアログを開く。
+   *
+   * Unit 3 (create_branch_dialog) で実装されるダイアログを呼び出す。
+   * 現時点ではスタブとして定義し、Unit 3 統合時に実装を差し替える。
+   */
+  protected openCreateBranchDialog(repoId: string): void {
+    console.warn(`[TODO] Unit 3 で実装予定: CreateBranchDialog for repo ${repoId}`);
+    // TODO: Unit 3 で CreateBranchDialogComponent を実装後、
+    //       HlmDialogService を使ってダイアログを開き、
+    //       戻り値を setNewBranch() に渡す。
+  }
+
+  /** テンプレート用: リポジトリの現在の選択ブランチ名を取得する */
+  protected getSelectedBranchName(repoId: string): string | null {
+    const selection = this.branchSelections().get(repoId);
+    if (!selection) return null;
+    return selection.type === 'existing' ? selection.branch : selection.newBranchInfo.newBranchName;
   }
 
   protected validate(): boolean {
@@ -147,7 +197,7 @@ export class WorkspaceCreateFormComponent {
       valid = false;
     } else {
       for (const id of this.selectedRepoIds()) {
-        if (!this.selectedBranches().has(id)) {
+        if (!this.branchSelections().has(id)) {
           this.selectionError.set('全てのリポジトリでブランチを選択してください');
           valid = false;
           break;
@@ -158,15 +208,30 @@ export class WorkspaceCreateFormComponent {
     return valid;
   }
 
+  /**
+   * branchSelections から createWorkspace 用の entries を構築する。
+   *
+   * 現時点では既存の IPC インターフェース（{ repositoryId, branch }）に合わせて変換する。
+   * Unit 4 で IPC 型が拡張された後、新規ブランチの場合は sourceBranch 情報も
+   * entries に含めるように変更する。
+   */
+  private buildEntries(): { repositoryId: string; branch: string }[] {
+    return [...this.selectedRepoIds()].map((repoId) => {
+      const selection = this.branchSelections().get(repoId);
+      if (!selection) {
+        throw new Error(`Branch selection not found for repository: ${repoId}`);
+      }
+      const branch =
+        selection.type === 'existing' ? selection.branch : selection.newBranchInfo.newBranchName;
+      return { repositoryId: repoId, branch };
+    });
+  }
+
   protected async onSubmit(): Promise<void> {
     if (!this.validate()) return;
     this.creating.set(true);
 
-    const entries = [...this.selectedRepoIds()].map((repoId) => ({
-      repositoryId: repoId,
-      branch: this.selectedBranches().get(repoId) ?? '',
-    }));
-
+    const entries = this.buildEntries();
     const result = await this.workspaceService.createWorkspace(
       this.workspaceName().trim(),
       entries,
