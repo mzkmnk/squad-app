@@ -37,7 +37,7 @@ function createWindow(): void {
     void mainWindow.loadURL('http://localhost:4200');
     mainWindow.webContents.openDevTools();
   } else {
-    void mainWindow.loadFile(path.join(__dirname, '../dist/squad-gui/browser/index.html'));
+    void mainWindow.loadFile(path.join(__dirname, '../dist/squad-app/browser/index.html'));
   }
 
   mainWindow.on('closed', () => {
