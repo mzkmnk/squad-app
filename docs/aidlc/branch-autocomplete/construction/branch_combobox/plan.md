@@ -8,24 +8,24 @@ Workspace 作成フォームおよび新規ブランチ作成ダイアログで�
 
 ### 1. セットアップ: spartan-ng helm ラッパー生成
 
-- [ ] 1.1 `ng g @spartan-ng/cli:ui popover` で popover helm ラッパーを生成
-- [ ] 1.2 `ng g @spartan-ng/cli:ui autocomplete` で autocomplete helm ラッパーを生成
-- [ ] 1.3 `tsconfig.json` の `paths` に `@spartan-ng/helm/popover` と `@spartan-ng/helm/autocomplete` を追加
-- [ ] 1.4 生成されたファイルの確認・ビルド確認
+- [x] 1.1 `ng g @spartan-ng/cli:ui popover` で popover helm ラッパーを生成
+- [x] 1.2 `ng g @spartan-ng/cli:ui autocomplete` で autocomplete helm ラッパーを生成
+- [x] 1.3 `tsconfig.json` の `paths` に `@spartan-ng/helm/popover` と `@spartan-ng/helm/autocomplete` を追加
+- [x] 1.4 生成されたファイルの確認・ビルド確認
 
 ### 2. コンポーネント実装
 
-- [ ] 2.1 `src/app/shared/branch-combobox/branch-combobox.ts` を作成（コンポーネント本体）
-- [ ] 2.2 `src/app/shared/branch-combobox/branch-combobox.html` を作成（テンプレート）
+- [x] 2.1 `src/app/shared/branch-combobox/branch-combobox.ts` を作成（コンポーネント本体）
+- [x] 2.2 `src/app/shared/branch-combobox/branch-combobox.html` を作成（テンプレート）
 
 ### 3. 最終確認
 
-- [ ] 3.1 lint・format 確認（`pnpm lint` / `pnpm format:check`）
-- [ ] 3.2 ビルド確認（`pnpm build`）
+- [x] 3.1 lint・format 確認（`pnpm lint` / `pnpm format:check`）
+- [x] 3.2 ビルド確認（`pnpm build`）
 
 ## 更新履歴
 
-| 日付       | 内容                                       |
-| ---------- | ------------------------------------------ |
-| 2025-07-25 | 初版作成                                   |
+| 日付       | 内容                                     |
+| ---------- | ---------------------------------------- |
+| 2025-07-25 | 初版作成                                 |
 | 2025-07-25 | テスト作成ステップを削除（ユーザー指示） |
