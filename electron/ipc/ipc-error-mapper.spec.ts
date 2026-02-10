@@ -4,7 +4,7 @@ import {
   GitOperationError,
   GitRepositoryExistsError,
 } from '../git/git-errors.js';
-import { IpcErrorCode } from './ipc-channels.js';
+import { IpcErrorCode } from '../types/ipc-error-code.js';
 import { mapErrorToIpcResult, notFoundResult, successResult } from './ipc-error-mapper.js';
 
 describe('mapErrorToIpcResult', () => {

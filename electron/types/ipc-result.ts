@@ -1,28 +1,29 @@
+import type { IpcErrorCode } from './ipc-error-code.js';
+
 /**
  * 全 IPC レスポンスの統一ラッパー型。
  *
- * @remarks
- * Discriminated Union パターンにより、`success` フィールドで型の絞り込みが可能。
+ * Discriminated Union パターンにより、success フィールドで型の絞り込みが可能。
  * IPC 通信ではメインプロセスの例外がレンダラーに伝播しないため、
  * エラーを明示的にシリアライズして返す必要がある。
  *
- * メインプロセス（`ipc-channels.ts`）とレンダラー（`electron-api.ts`）の
- * 両方から参照される共通型として `electron/types/` に配置している。
+ * メインプロセス（ipc-channels.ts）とレンダラー（electron-api.ts）の
+ * 両方から参照される共通型として electron/types/ に配置している。
  *
  * @typeParam T - 成功時に返されるデータの型
- *
- * @example
- * ```typescript
- * const result: IpcResult<Repository[]> = await window.electronAPI.getRepositories();
- * if (result.success) {
- *   console.log(result.data); // Repository[]
- * } else {
- *   console.error(result.error.code, result.error.message);
- * }
- * ```
  */
-// TODO: error.code を string から IpcErrorCode 型に変更して型安全性を強化する
-//       （循環参照を避けるため IpcErrorCode 型を types/ ディレクトリに移動する必要あり）
-export type IpcResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: { code: string; message: string } };
+export type IpcResult<T> = { success: true; data: T } | IpcErrorResult;
+
+/**
+ * {@link IpcResult} の失敗ブランチのみを表す型。
+ *
+ * @remarks
+ * `mapErrorToIpcResult` や `notFoundResult` など、常に失敗を返す関数の
+ * 戻り値型として使用する。`IpcResult<never>` と異なり、成功ブランチ
+ * （`data: never`）を含まないため、ESLint の `no-unsafe-assignment` に
+ * 抵触しない。
+ */
+export interface IpcErrorResult {
+  success: false;
+  error: { code: IpcErrorCode; message: string };
+}
