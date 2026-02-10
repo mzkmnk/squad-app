@@ -386,7 +386,7 @@ electron/
 │   └── git-validation.ts         # 既存（変更なし）
 ├── main.ts                       # 変更: IPC ハンドラー登録を追加
 ├── preload.ts                    # 変更: electronAPI を拡張
-└── electron.d.ts                 # 変更: ElectronAPI 型定義を拡張
+└── electron-api.ts                 # 変更: ElectronAPI 型定義を拡張
 ```
 
 ### ファイル詳細
@@ -776,9 +776,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 - レンダラー側は `window.electronAPI.addRepository(url)` のようにメソッド呼び出しするだけで IPC 通信が完了する。
 - `IpcChannels` 定数を import することで、チャネル名のタイポを防止する。
 
-**注意**: preload スクリプトは Electron のサンドボックス環境で実行されるため、`electron/ipc/ipc-channels.ts` を直接 import できるかはビルド構成に依存する。import が不可能な場合は、チャネル名の文字列リテラルを直接使用し、型定義のみ `electron.d.ts` で管理する代替案を採用する。
+**注意**: preload スクリプトは Electron のサンドボックス環境で実行されるため、`electron/ipc/ipc-channels.ts` を直接 import できるかはビルド構成に依存する。import が不可能な場合は、チャネル名の文字列リテラルを直接使用し、型定義のみ `electron-api.ts` で管理する代替案を採用する。
 
-#### `electron/electron.d.ts` — 変更内容
+#### `electron/electron-api.ts` — 変更内容
 
 `ElectronAPI` インターフェースを拡張し、全 IPC メソッドの型定義を追加する。
 
@@ -820,8 +820,8 @@ declare global {
 
 **設計ポイント**:
 
-- `IpcResult<T>` を `electron.d.ts` にも定義することで、Angular 側（レンダラー）から型安全に IPC レスポンスを扱える。
-- `tsconfig.app.json` の `include` に `electron/electron.d.ts` が既に含まれているため、Angular コンポーネントから `window.electronAPI` の型補完が効く。
+- `IpcResult<T>` を `electron-api.ts` にも定義することで、Angular 側（レンダラー）から型安全に IPC レスポンスを扱える。
+- `tsconfig.app.json` の `include` に `electron/types/**/*.ts` が含まれているため、Angular コンポーネントから `window.electronAPI` の型補完が効く。
 - `Repository` と `Workspace` の型は `electron/types/models.ts` から import し、型の二重定義を避ける。
 
 ## preload スクリプトのビルド戦略
@@ -832,7 +832,7 @@ Electron の preload スクリプトはサンドボックス環境で実行さ�
 
 ### 採用方針: チャネル名文字列リテラル + 型定義分離
 
-preload スクリプトでは `IpcChannels` 定数を import せず、チャネル名を文字列リテラルとして直接記述する。型安全性は `electron.d.ts` の `ElectronAPI` インターフェースで担保する。
+preload スクリプトでは `IpcChannels` 定数を import せず、チャネル名を文字列リテラルとして直接記述する。型安全性は `electron-api.ts` の `ElectronAPI` インターフェースで担保する。
 
 **理由**:
 

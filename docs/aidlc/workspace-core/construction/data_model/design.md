@@ -124,7 +124,7 @@ electron/
 │   └── squad-store.spec.ts       # ユニットテスト
 ├── main.ts                       # 既存（変更なし）
 ├── preload.ts                    # 既存（変更なし）
-├── electron.d.ts                 # 既存（変更なし）
+├── electron-api.ts                 # 既存（変更なし）
 └── tsconfig.json                 # include パス追加
 ```
 
@@ -293,7 +293,7 @@ Angular 側から `electron/types/` の型定義を参照できるよう、`incl
 {
   "include": [
     "src/**/*.ts",
-    "electron/electron.d.ts",
+    "electron/electron-api.ts",
     "electron/types/**/*.ts", // 追加
   ],
 }

@@ -41,7 +41,7 @@ model: claude-opus-4.6
 - [ ] チャネル名が `IpcChannels` 定数に定義されているか
 - [ ] リクエスト型が `ipc-channels.ts` に定義されているか
 - [ ] エラーが適切なエラークラスで分類されているか
-- [ ] `preload.ts` と `electron.d.ts` が同期しているか
+- [ ] `preload.ts` と `electron-api.ts` が同期しているか
 - [ ] zod スキーマでバリデーションされているか
 
 ### 4. TypeScript 品質

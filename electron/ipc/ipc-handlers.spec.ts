@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { IpcMainInvokeEvent } from 'electron';
 import { extractRepoName, registerIpcHandlers } from './ipc-handlers.js';
-import { IpcErrorCode } from './ipc-channels.js';
+import { IpcErrorCode } from '../types/ipc-error-code.js';
 import {
   GitValidationError,
   GitOperationError,

@@ -3,7 +3,8 @@ import {
   GitOperationError,
   GitRepositoryExistsError,
 } from '../git/git-errors.js';
-import { IpcErrorCode, type IpcResult } from './ipc-channels.js';
+import { IpcErrorCode } from '../types/ipc-error-code.js';
+import type { IpcErrorResult, IpcResult } from '../types/ipc-result.js';
 
 /**
  * メインプロセスで発生した例外を {@link IpcResult} の失敗形式に変換する。
@@ -19,7 +20,7 @@ import { IpcErrorCode, type IpcResult } from './ipc-channels.js';
  * - `Error` でないオブジェクト → `INTERNAL_ERROR` + `'Unknown error'`
  *
  * @param error - 捕捉された例外オブジェクト
- * @returns 失敗形式の {@link IpcResult}
+ * @returns 失敗形式の {@link IpcErrorResult}
  *
  * @example
  * ```typescript
@@ -30,7 +31,7 @@ import { IpcErrorCode, type IpcResult } from './ipc-channels.js';
  * }
  * ```
  */
-export function mapErrorToIpcResult(error: unknown): IpcResult<never> {
+export function mapErrorToIpcResult(error: unknown): IpcErrorResult {
   if (error instanceof GitValidationError) {
     return {
       success: false,
@@ -70,7 +71,7 @@ export function mapErrorToIpcResult(error: unknown): IpcResult<never> {
  *
  * @param resourceType - リソースの種別名（例: `'Repository'`, `'Workspace'`）
  * @param id - 見つからなかったリソースの UUID
- * @returns `NOT_FOUND` コードを持つ失敗形式の {@link IpcResult}
+ * @returns `NOT_FOUND` コードを持つ失敗形式の {@link IpcErrorResult}
  *
  * @example
  * ```typescript
@@ -80,7 +81,7 @@ export function mapErrorToIpcResult(error: unknown): IpcResult<never> {
  * }
  * ```
  */
-export function notFoundResult(resourceType: string, id: string): IpcResult<never> {
+export function notFoundResult(resourceType: string, id: string): IpcErrorResult {
   return {
     success: false,
     error: {

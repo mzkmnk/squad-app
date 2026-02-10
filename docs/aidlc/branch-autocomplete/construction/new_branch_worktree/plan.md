@@ -26,7 +26,7 @@ Workspace 作成時に、新規ブランチを起点ブランチから作成し�
 - [x] テスト: 混在エントリ（既存 + 新規ブランチ）の処理確認
 - [x] テスト: 新規ブランチ作成失敗時のロールバック確認
 
-### 4. ElectronAPI 型定義変更（electron.d.ts）
+### 4. ElectronAPI 型定義変更（electron-api.ts）
 
 - [x] `createWorkspace` の entries 型に `sourceBranch?: string` を追加
 

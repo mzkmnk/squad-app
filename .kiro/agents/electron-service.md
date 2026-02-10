@@ -43,7 +43,7 @@ electron/
   types/               # 共有型定義
     models.ts          # エンティティ + zod スキーマ
     ipc-result.ts      # IpcResult<T> 型
-    electron.d.ts      # window.electronAPI の型定義
+    electron-api.ts    # window.electronAPI の型定義
 ```
 
 ## コーディング規約
@@ -117,11 +117,11 @@ export type NewEntity = z.infer<typeof newEntitySchema>;
 ### preload.ts の更新
 
 - 新しい IPC チャネルを追加したら `preload.ts` の `contextBridge.exposeInMainWorld` を更新する
-- `electron/types/electron.d.ts` の `ElectronAPI` インターフェースも更新する
+- `electron/types/electron-api.ts` の `ElectronAPI` インターフェースも更新する
 
 ### 型定義の更新
 
-- `electron.d.ts` に `window.electronAPI` の型を追加する
+- `electron-api.ts` に `window.electronAPI` の型を追加する
 - Angular 側のサービスからも参照されるため、型の整合性を保つ
 
 ## 新しい IPC チャネル追加の手順
@@ -131,7 +131,7 @@ export type NewEntity = z.infer<typeof newEntitySchema>;
 3. **サービス実装**: `electron/{domain}/` にサービスクラスを作成
 4. **ハンドラー登録**: `electron/ipc/ipc-handlers.ts` にハンドラーを追加
 5. **preload 更新**: `electron/preload.ts` に API を公開
-6. **型宣言更新**: `electron/types/electron.d.ts` に型を追加
+6. **型宣言更新**: `electron/types/electron-api.ts` に型を追加
 7. **Angular サービス**: `src/app/services/` にサービスを作成（Angular 側）
 
 ## エラーハンドリングパターン
