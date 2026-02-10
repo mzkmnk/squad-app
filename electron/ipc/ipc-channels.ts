@@ -165,6 +165,8 @@ export interface WorkspaceCreateRequest {
     repositoryId: string;
     /** チェックアウト対象のブランチ名 */
     branch: string;
+    /** 新規ブランチの起点ブランチ名。指定時は branch を sourceBranch から新規作成する */
+    sourceBranch?: string;
   }[];
 }
 

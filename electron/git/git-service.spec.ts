@@ -323,3 +323,149 @@ describe('GitService - getRemoteBranches', () => {
     expect(branches).toEqual([]);
   });
 });
+
+// --- createBranch ---
+
+describe('GitService - createBranch', () => {
+  it('起点ブランチから新規ブランチを作成できる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    await service.createBranch('test-repo', 'feature/new', 'main');
+
+    // ブランチが作成されたことを確認
+    const repoDir = paths.repoDir('test-repo');
+    const { stdout } = await execFileAsync('git', ['branch', '--list', 'feature/new'], {
+      cwd: repoDir,
+    });
+    expect(stdout.trim()).toContain('feature/new');
+  });
+
+  it('正しい repoDir が cwd として使用される', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    await service.createBranch('test-repo', 'test-branch', 'main');
+
+    const repoDir = paths.repoDir('test-repo');
+    const { stdout } = await execFileAsync('git', ['branch', '--list', 'test-branch'], {
+      cwd: repoDir,
+    });
+    expect(stdout.trim()).toContain('test-branch');
+  });
+
+  it('newBranch が空文字の場合に GitValidationError がスローされる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+
+    await expect(service.createBranch('test-repo', '', 'main')).rejects.toThrow(GitValidationError);
+  });
+
+  it('sourceBranch が空文字の場合に GitValidationError がスローされる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+
+    await expect(service.createBranch('test-repo', 'feature/new', '')).rejects.toThrow(
+      GitValidationError,
+    );
+  });
+
+  it('newBranch が Git 命名規則に違反する場合に GitValidationError がスローされる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+
+    await expect(service.createBranch('test-repo', '..invalid', 'main')).rejects.toThrow(
+      GitValidationError,
+    );
+  });
+
+  it('起点ブランチが存在しない場合に GitOperationError がスローされる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+
+    await expect(
+      service.createBranch('test-repo', 'feature/new', 'nonexistent-branch'),
+    ).rejects.toThrow(GitOperationError);
+  });
+});
+
+// --- addWorktree with sourceBranch ---
+
+describe('GitService - addWorktree (sourceBranch)', () => {
+  /**
+   * リモートに develop ブランチを追加するヘルパー
+   */
+  async function addDevelopBranch(): Promise<void> {
+    const workDir = path.join(tmpDir, 'work-for-develop');
+    await fs.mkdir(workDir, { recursive: true });
+    await execFileAsync('git', ['clone', remoteDir, '.'], { cwd: workDir });
+    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
+    await execFileAsync('git', ['checkout', '-b', 'develop'], { cwd: workDir });
+    await fs.writeFile(path.join(workDir, 'develop.txt'), 'develop');
+    await execFileAsync('git', ['add', '.'], { cwd: workDir });
+    await execFileAsync('git', ['commit', '-m', 'add develop'], { cwd: workDir });
+    await execFileAsync('git', ['push', 'origin', 'develop'], { cwd: workDir });
+    await fs.rm(workDir, { recursive: true, force: true });
+  }
+
+  it('sourceBranch 省略時は branch 自身が起点として使用される', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    const actualBranch = await service.addWorktree('test-repo', 'my-workspace', 'main');
+
+    expect(actualBranch).toContain('main');
+    const worktreeDir = paths.worktreeDir('my-workspace', 'test-repo');
+    const stat = await fs.stat(worktreeDir);
+    expect(stat.isDirectory()).toBe(true);
+  });
+
+  it('sourceBranch 指定時は sourceBranch から新規ブランチが作成される', async () => {
+    await addDevelopBranch();
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    const actualBranch = await service.addWorktree(
+      'test-repo',
+      'my-workspace',
+      'feature/from-develop',
+      'develop',
+    );
+
+    expect(actualBranch).toContain('feature/from-develop');
+    const worktreeDir = paths.worktreeDir('my-workspace', 'test-repo');
+    const stat = await fs.stat(worktreeDir);
+    expect(stat.isDirectory()).toBe(true);
+  });
+
+  it('sourceBranch 指定時に suffix 付きブランチ名が返される', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    const actualBranch = await service.addWorktree(
+      'test-repo',
+      'my-workspace',
+      'feature/new',
+      'main',
+    );
+
+    // suffix が付与されている（元のブランチ名 + '-' + 8文字）
+    expect(actualBranch).toMatch(/^feature\/new-[a-f0-9]{8}$/);
+  });
+
+  it('sourceBranch 指定時に Workspace ディレクトリが自動作成される', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    await service.addWorktree('test-repo', 'new-ws', 'feature/new', 'main');
+
+    const wsDir = paths.workspaceDir('new-ws');
+    const stat = await fs.stat(wsDir);
+    expect(stat.isDirectory()).toBe(true);
+  });
+
+  it('sourceBranch が Git 命名規則に違反する場合に GitValidationError がスローされる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+
+    await expect(
+      service.addWorktree('test-repo', 'my-workspace', 'feature/new', ''),
+    ).rejects.toThrow(GitValidationError);
+  });
+});

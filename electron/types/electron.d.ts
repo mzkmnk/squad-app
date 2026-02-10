@@ -156,7 +156,7 @@ export interface ElectronAPI {
    */
   createWorkspace: (
     name: string,
-    entries: { repositoryId: string; branch: string }[],
+    entries: { repositoryId: string; branch: string; sourceBranch?: string }[],
   ) => Promise<IpcResult<Workspace>>;
 
   /**
