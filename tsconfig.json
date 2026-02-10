@@ -54,9 +54,6 @@
     },
     {
       "path": "./electron/tsconfig.json"
-    },
-    {
-      "path": "./electron/tsconfig.preload.json"
     }
   ]
 }
