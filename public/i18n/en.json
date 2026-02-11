@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "navigation": "Navigation",
+    "workspaces": "Workspaces",
+    "repositories": "Repositories",
+    "toggleSidebar": "Toggle sidebar"
+  },
+  "common": {
+    "create": "Create",
+    "add": "Add",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "syncing": "Syncing...",
+    "creating": "Creating...",
+    "cloning": "Cloning...",
+    "register": "Register",
+    "selectRepo": "Select {{ name }}"
+  },
+  "repos": {
+    "title": "Repositories",
+    "empty": "No repositories registered",
+    "emptyDescription": "Register a repository using the \"Add\" button.",
+    "deleteConfirmTitle": "Delete this repository?",
+    "deleteConfirmDescription": "Deleting \"{{ name }}\" will permanently remove the Bare Repository from disk. This action cannot be undone.",
+    "deleteAction": "Delete",
+    "deleteAriaLabel": "Delete",
+    "addTitle": "Add Repository",
+    "addDescription": "Enter the remote repository URL. HTTPS and SSH formats are supported.",
+    "urlLabel": "Repository URL",
+    "urlPlaceholder": "https://github.com/org/repo.git",
+    "validation": {
+      "urlRequired": "Please enter a repository URL.",
+      "urlInvalidFormat": "Please enter a URL in HTTPS or SSH format."
+    }
+  },
+  "workspaces": {
+    "title": "Workspaces",
+    "empty": "No workspaces",
+    "emptyDescription": "Create a new workspace using the \"Create\" button.",
+    "createdAt": "Created: {{ date }}",
+    "openInVscode": "Open in VS Code",
+    "openSuccess": "VS Code launched",
+    "deleteAriaLabel": "Delete",
+    "deleteConfirmTitle": "Delete this workspace?",
+    "deleteConfirmDescription": "Deleting \"{{ name }}\" will permanently remove the associated Worktrees and .code-workspace files from disk. This action cannot be undone.",
+    "deleteAction": "Delete",
+    "deleteSuccess": "Workspace \"{{ name }}\" deleted",
+    "unknownRepo": "Unknown repository",
+    "createTitle": "Create Workspace",
+    "createDescription": "Enter a workspace name and select the repositories and branches to include.",
+    "nameLabel": "Workspace Name",
+    "namePlaceholder": "feature-payment",
+    "reposAndBranches": "Repositories and Branches",
+    "noReposRegistered": "No repositories registered. Please register a repository first.",
+    "fetchingBranches": "Fetching branches...",
+    "createNewBranch": "Create new branch",
+    "createSuccess": "Workspace \"{{ name }}\" created",
+    "validation": {
+      "nameRequired": "Please enter a workspace name.",
+      "nameInvalidChars": "Only alphanumeric characters, hyphens, and underscores are allowed.",
+      "selectAtLeastOneRepo": "Please select at least one repository.",
+      "selectBranchForAll": "Please select a branch for all repositories."
+    }
+  },
+  "branches": {
+    "searchPlaceholder": "Search branches...",
+    "noMatch": "No matching branches",
+    "createTitle": "Create New Branch",
+    "createDescription": "Select a base branch and enter a new branch name.",
+    "baseLabel": "Base Branch",
+    "basePlaceholder": "Search base branch...",
+    "newNameLabel": "New Branch Name",
+    "newNamePlaceholder": "feature/new-api",
+    "validation": {
+      "nameRequired": "Please enter a branch name.",
+      "noLeadingDot": "Branch name cannot start with \".\".",
+      "noLeadingDash": "Branch name cannot start with \"-\".",
+      "noTrailingSlash": "Branch name cannot end with \"/\".",
+      "noTrailingLock": "Branch name cannot end with \".lock\".",
+      "noDoubleDot": "Branch name cannot contain \"..\".",
+      "noDoubleSlash": "Branch name cannot contain consecutive \"/\".",
+      "invalidChars": "Branch name contains invalid characters.",
+      "duplicate": "A branch with this name already exists."
+    }
+  },
+  "errors": {
+    "VALIDATION_ERROR": "Validation error: {{ message }}",
+    "REPOSITORY_EXISTS": "This repository is already registered.",
+    "GIT_OPERATION_FAILED": "Git operation failed: {{ message }}",
+    "NOT_FOUND": "The specified resource was not found.",
+    "INTERNAL_ERROR": "An unexpected error occurred."
+  }
+}
