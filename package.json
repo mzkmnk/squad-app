@@ -90,7 +90,7 @@
   },
   "build": {
     "appId": "com.squad.app",
-    "productName": "SquadApp",
+    "productName": "Squad",
     "directories": {
       "output": "release"
     },
@@ -103,6 +103,7 @@
         "dmg",
         "zip"
       ],
+      "icon": "build/icon.png",
       "identity": null,
       "category": "public.app-category.developer-tools"
     },

@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Create PR",
+  "description": "現在のブランチの変更内容を分析し、create-pr subagentを使ってGitHub PRを作成する",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "create-pr subagent を使って GitHub PR を作成してください。\\n\\n以下のコマンドで subagent を呼び出してください：\\ninvokeSubAgent(name: \\\"create-pr\\\", prompt: \\\"現在のブランチの変更内容を分析し、GitHub PR を作成してください。\\\")"
+  }
+}
