@@ -34,6 +34,7 @@ describe('WorkspaceService', () => {
   const mockWorkspace: Workspace = {
     id: 'ws-1',
     name: 'feature-payment-a3f2b1c9',
+    displayName: 'feature-payment',
     entries: [
       { repositoryId: 'repo-1', branch: 'feature/payment' },
       { repositoryId: 'repo-2', branch: 'main' },

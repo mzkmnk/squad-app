@@ -31,7 +31,7 @@
           @for (repo of repositories(); track repo.id) {
             <div hlmCard size="sm" role="listitem" class="flex flex-col justify-between">
               <div hlmCardHeader>
-                <h3 hlmCardTitle class="text-base">{{ repo.name }}</h3>
+                <h3 hlmCardTitle class="text-base">{{ repo.displayName }}</h3>
                 <p hlmCardDescription class="truncate text-xs">
                   {{ repo.remoteUrl }}
                 </p>
@@ -56,7 +56,7 @@
                     <hlm-alert-dialog-header>
                       <h2 hlmAlertDialogTitle>{{ t('repos.deleteConfirmTitle') }}</h2>
                       <p hlmAlertDialogDescription>
-                        {{ t('repos.deleteConfirmDescription', { name: repo.name }) }}
+                        {{ t('repos.deleteConfirmDescription', { name: repo.displayName }) }}
                       </p>
                     </hlm-alert-dialog-header>
                     <hlm-alert-dialog-footer>

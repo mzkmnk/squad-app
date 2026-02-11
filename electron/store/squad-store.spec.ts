@@ -45,13 +45,17 @@ describe('SquadStore - initialize', () => {
       await fs.readFile(paths.workspacesConfig, 'utf-8'),
     ) as WorkspacesConfig;
 
-    expect(reposData).toEqual({ version: 1, repositories: [] });
-    expect(workspacesData).toEqual({ version: 1, workspaces: [] });
+    expect(reposData).toEqual({ version: 2, repositories: [] });
+    expect(workspacesData).toEqual({ version: 2, workspaces: [] });
   });
 
   it('initialize() を複数回呼び出しても既存データが上書きされない（冪等性）', async () => {
     await store.initialize();
-    await store.addRepository({ name: 'test', remoteUrl: 'https://example.com/test.git' });
+    await store.addRepository({
+      name: 'test',
+      displayName: 'test',
+      remoteUrl: 'https://example.com/test.git',
+    });
 
     await store.initialize();
 
@@ -64,7 +68,7 @@ describe('SquadStore - initialize', () => {
     const paths = createSquadPaths(tmpDir);
     await fs.mkdir(paths.configDir, { recursive: true });
 
-    const existingData: ReposConfig = {
+    const existingData = {
       version: 1,
       repositories: [
         {
@@ -74,7 +78,7 @@ describe('SquadStore - initialize', () => {
           registeredAt: '2026-01-01T00:00:00.000Z',
         },
       ],
-    };
+    } as ReposConfig;
     await fs.writeFile(paths.reposConfig, JSON.stringify(existingData, null, 2));
 
     await store.initialize();
@@ -95,6 +99,7 @@ describe('SquadStore - Repository CRUD', () => {
   it('addRepository() でリポジトリが追加され、id と registeredAt が自動付与される', async () => {
     const repo = await store.addRepository({
       name: 'backend',
+      displayName: 'backend',
       remoteUrl: 'https://github.com/org/backend.git',
     });
 
@@ -111,6 +116,7 @@ describe('SquadStore - Repository CRUD', () => {
   it('addRepository() の結果が repos.json に永続化される', async () => {
     const repo = await store.addRepository({
       name: 'backend',
+      displayName: 'backend',
       remoteUrl: 'https://github.com/org/backend.git',
     });
 
@@ -122,8 +128,16 @@ describe('SquadStore - Repository CRUD', () => {
   });
 
   it('getRepositories() で全リポジトリが取得できる', async () => {
-    await store.addRepository({ name: 'backend', remoteUrl: 'https://example.com/backend.git' });
-    await store.addRepository({ name: 'frontend', remoteUrl: 'https://example.com/frontend.git' });
+    await store.addRepository({
+      name: 'backend',
+      displayName: 'backend',
+      remoteUrl: 'https://example.com/backend.git',
+    });
+    await store.addRepository({
+      name: 'frontend',
+      displayName: 'frontend',
+      remoteUrl: 'https://example.com/frontend.git',
+    });
 
     const repos = await store.getRepositories();
     expect(repos).toHaveLength(2);
@@ -133,6 +147,7 @@ describe('SquadStore - Repository CRUD', () => {
   it('getRepository(id) で特定のリポジトリが取得できる', async () => {
     const repo = await store.addRepository({
       name: 'backend',
+      displayName: 'backend',
       remoteUrl: 'https://example.com/backend.git',
     });
 
@@ -148,6 +163,7 @@ describe('SquadStore - Repository CRUD', () => {
   it('removeRepository(id) でリポジトリが削除され、repos.json から消える', async () => {
     const repo = await store.addRepository({
       name: 'backend',
+      displayName: 'backend',
       remoteUrl: 'https://example.com/backend.git',
     });
 
@@ -356,7 +372,7 @@ describe('SquadStore - データ復元', () => {
     const paths = createSquadPaths(tmpDir);
     await fs.mkdir(paths.configDir, { recursive: true });
 
-    const existingData: ReposConfig = {
+    const existingData = {
       version: 1,
       repositories: [
         {
@@ -366,7 +382,7 @@ describe('SquadStore - データ復元', () => {
           registeredAt: '2026-01-01T00:00:00.000Z',
         },
       ],
-    };
+    } as ReposConfig;
     await fs.writeFile(paths.reposConfig, JSON.stringify(existingData, null, 2));
 
     await store.initialize();
@@ -375,13 +391,15 @@ describe('SquadStore - データ復元', () => {
     expect(repos).toHaveLength(1);
     expect(repos[0].id).toBe('pre-existing-id');
     expect(repos[0].name).toBe('pre-existing');
+    // v1 → v2 マイグレーションで displayName が name から補完される
+    expect(repos[0].displayName).toBe('pre-existing');
   });
 
   it('workspaces.json に事前データがある状態で initialize() → getWorkspaces() でデータが復元される', async () => {
     const paths = createSquadPaths(tmpDir);
     await fs.mkdir(paths.configDir, { recursive: true });
 
-    const existingData: WorkspacesConfig = {
+    const existingData = {
       version: 1,
       workspaces: [
         {
@@ -392,7 +410,7 @@ describe('SquadStore - データ復元', () => {
           updatedAt: '2026-01-01T00:00:00.000Z',
         },
       ],
-    };
+    } as WorkspacesConfig;
     await fs.writeFile(paths.workspacesConfig, JSON.stringify(existingData, null, 2));
 
     await store.initialize();
@@ -401,6 +419,81 @@ describe('SquadStore - データ復元', () => {
     expect(workspaces).toHaveLength(1);
     expect(workspaces[0].id).toBe('pre-existing-ws');
     expect(workspaces[0].name).toBe('old-workspace');
+    // v1 → v2 マイグレーションで displayName が name から補完される
+    expect(workspaces[0].displayName).toBe('old-workspace');
+  });
+
+  it('v1 repos.json のマイグレーション後、ファイルが v2 に永続化される', async () => {
+    const paths = createSquadPaths(tmpDir);
+    await fs.mkdir(paths.configDir, { recursive: true });
+    await fs.mkdir(paths.reposDir, { recursive: true });
+    await fs.mkdir(paths.workspacesDir, { recursive: true });
+
+    // v2 の workspaces.json を用意（repos のマイグレーションテストなので）
+    await fs.writeFile(paths.workspacesConfig, JSON.stringify({ version: 2, workspaces: [] }));
+
+    await fs.writeFile(
+      paths.reposConfig,
+      JSON.stringify({
+        version: 1,
+        repositories: [
+          {
+            id: 'repo-1',
+            name: 'backend-a1b2c3d4',
+            remoteUrl: 'https://example.com/backend.git',
+            registeredAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      }),
+    );
+
+    // 読み込みでマイグレーションが走る
+    await store.getRepositories();
+
+    // ファイルが v2 に書き換わっていることを確認
+    const raw = JSON.parse(await fs.readFile(paths.reposConfig, 'utf-8')) as Record<
+      string,
+      unknown
+    >;
+    expect(raw.version).toBe(2);
+    const repos = raw.repositories as Record<string, unknown>[];
+    expect(repos[0].displayName).toBe('backend');
+  });
+
+  it('v1 workspaces.json のマイグレーション後、ファイルが v2 に永続化される', async () => {
+    const paths = createSquadPaths(tmpDir);
+    await fs.mkdir(paths.configDir, { recursive: true });
+    await fs.mkdir(paths.reposDir, { recursive: true });
+    await fs.mkdir(paths.workspacesDir, { recursive: true });
+
+    // v2 の repos.json を用意
+    await fs.writeFile(paths.reposConfig, JSON.stringify({ version: 2, repositories: [] }));
+
+    await fs.writeFile(
+      paths.workspacesConfig,
+      JSON.stringify({
+        version: 1,
+        workspaces: [
+          {
+            id: 'ws-1',
+            name: 'feature-payment-a1b2c3d4',
+            entries: [],
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      }),
+    );
+
+    await store.getWorkspaces();
+
+    const raw = JSON.parse(await fs.readFile(paths.workspacesConfig, 'utf-8')) as Record<
+      string,
+      unknown
+    >;
+    expect(raw.version).toBe(2);
+    const workspaces = raw.workspaces as Record<string, unknown>[];
+    expect(workspaces[0].displayName).toBe('feature-payment');
   });
 });
 

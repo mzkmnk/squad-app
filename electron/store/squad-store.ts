@@ -15,8 +15,14 @@ import {
 } from '../types/models.js';
 import { createSquadPaths, type SquadPaths } from './squad-paths.js';
 import { generateSuffix, appendSuffix, MAX_SUFFIX_RETRY } from '../git/uuid-suffix.js';
-
-const CURRENT_VERSION = 1;
+import {
+  runMigrations,
+  reposMigrations,
+  workspacesMigrations,
+  REPOS_CURRENT_VERSION,
+  WORKSPACES_CURRENT_VERSION,
+  SETTINGS_CURRENT_VERSION,
+} from './migrations.js';
 
 const DEFAULT_SETTINGS: Settings = { selectedIde: 'vscode' };
 
@@ -53,15 +59,15 @@ export class SquadStore {
     await fs.mkdir(this.paths.workspacesDir, { recursive: true });
 
     await this.initConfigFile(this.paths.reposConfig, {
-      version: CURRENT_VERSION,
+      version: REPOS_CURRENT_VERSION,
       repositories: [],
     });
     await this.initConfigFile(this.paths.workspacesConfig, {
-      version: CURRENT_VERSION,
+      version: WORKSPACES_CURRENT_VERSION,
       workspaces: [],
     });
     await this.initConfigFile(this.paths.settingsConfig, {
-      version: CURRENT_VERSION,
+      version: SETTINGS_CURRENT_VERSION,
       settings: DEFAULT_SETTINGS,
     });
   }
@@ -95,11 +101,14 @@ export class SquadStore {
    * @param repo - 登録するリポジトリの `name` と `remoteUrl`
    * @returns `id` と `registeredAt` が自動付与されたリポジトリ
    */
-  async addRepository(repo: Pick<Repository, 'name' | 'remoteUrl'>): Promise<Repository> {
+  async addRepository(
+    repo: Pick<Repository, 'name' | 'displayName' | 'remoteUrl'>,
+  ): Promise<Repository> {
     const config = await this.readReposConfig();
     const newRepo: Repository = {
       id: crypto.randomUUID(),
       name: repo.name,
+      displayName: repo.displayName,
       remoteUrl: repo.remoteUrl,
       registeredAt: new Date().toISOString(),
     };
@@ -166,6 +175,7 @@ export class SquadStore {
       const newWorkspace: Workspace = {
         id: crypto.randomUUID(),
         name: actualName,
+        displayName: workspace.name,
         entries: [...workspace.entries],
         createdAt: now,
         updatedAt: now,
@@ -234,7 +244,7 @@ export class SquadStore {
     } catch {
       // パース失敗・ファイル未存在時はデフォルト値で再初期化
       await this.writeAtomically(this.paths.settingsConfig, {
-        version: CURRENT_VERSION,
+        version: SETTINGS_CURRENT_VERSION,
         settings: DEFAULT_SETTINGS,
       });
       return { ...DEFAULT_SETTINGS };
@@ -249,7 +259,7 @@ export class SquadStore {
    */
   async updateSettings(settings: Settings): Promise<Settings> {
     await this.writeAtomically(this.paths.settingsConfig, {
-      version: CURRENT_VERSION,
+      version: SETTINGS_CURRENT_VERSION,
       settings,
     });
     return { ...settings };
@@ -270,12 +280,14 @@ export class SquadStore {
 
   private async readReposConfig(): Promise<{ version: number; repositories: Repository[] }> {
     const raw = await fs.readFile(this.paths.reposConfig, 'utf-8');
-    const config = reposConfigSchema.parse(JSON.parse(raw));
-    if (config.version !== CURRENT_VERSION) {
-      throw new Error(
-        `Unsupported repos.json version: ${String(config.version)}. Expected version ${String(CURRENT_VERSION)}.`,
-      );
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+    const { result, migrated } = runMigrations(parsed, reposMigrations, REPOS_CURRENT_VERSION);
+    if (migrated) {
+      await this.writeAtomically(this.paths.reposConfig, result);
     }
+
+    const config = reposConfigSchema.parse(result);
     return { version: config.version, repositories: [...config.repositories] };
   }
 
@@ -284,21 +296,27 @@ export class SquadStore {
     workspaces: Workspace[];
   }> {
     const raw = await fs.readFile(this.paths.workspacesConfig, 'utf-8');
-    const config = workspacesConfigSchema.parse(JSON.parse(raw));
-    if (config.version !== CURRENT_VERSION) {
-      throw new Error(
-        `Unsupported workspaces.json version: ${String(config.version)}. Expected version ${String(CURRENT_VERSION)}.`,
-      );
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+    const { result, migrated } = runMigrations(
+      parsed,
+      workspacesMigrations,
+      WORKSPACES_CURRENT_VERSION,
+    );
+    if (migrated) {
+      await this.writeAtomically(this.paths.workspacesConfig, result);
     }
+
+    const config = workspacesConfigSchema.parse(result);
     return { version: config.version, workspaces: [...config.workspaces] };
   }
 
   private async readSettingsConfig(): Promise<Settings> {
     const raw = await fs.readFile(this.paths.settingsConfig, 'utf-8');
     const config = settingsConfigSchema.parse(JSON.parse(raw));
-    if (config.version !== CURRENT_VERSION) {
+    if (config.version !== SETTINGS_CURRENT_VERSION) {
       throw new Error(
-        `Unsupported settings.json version: ${String(config.version)}. Expected version ${String(CURRENT_VERSION)}.`,
+        `Unsupported settings.json version: ${String(config.version)}. Expected version ${String(SETTINGS_CURRENT_VERSION)}.`,
       );
     }
     return { ...config.settings };
