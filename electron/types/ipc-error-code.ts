@@ -13,6 +13,10 @@ export const IpcErrorCode = {
   GIT_OPERATION_FAILED: 'GIT_OPERATION_FAILED',
   /** 指定された ID のリソースが見つからない */
   NOT_FOUND: 'NOT_FOUND',
+  /** 設定された IDE がインストールされていない */
+  IDE_NOT_FOUND: 'IDE_NOT_FOUND',
+  /** IDE の起動に失敗した */
+  IDE_LAUNCH_FAILED: 'IDE_LAUNCH_FAILED',
   /** 予期しないエラー。上記に該当しない全ての例外がマッピングされる */
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;

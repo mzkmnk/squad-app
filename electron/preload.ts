@@ -74,4 +74,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   /** 指定された ID の Workspace を VS Code で開く。 */
   openWorkspace: (id: string) => ipcRenderer.invoke(IpcChannels.WORKSPACE_OPEN, { id }),
+
+  // ---------------------------------------------------------------------------
+  // 設定操作
+  // ---------------------------------------------------------------------------
+
+  /** 現在のアプリケーション設定を取得する。 */
+  getSettings: () => ipcRenderer.invoke(IpcChannels.SETTINGS_GET),
+
+  /** アプリケーション設定を更新する。 */
+  updateSettings: (settings: { selectedIde: string }) =>
+    ipcRenderer.invoke(IpcChannels.SETTINGS_UPDATE, { settings }),
+
+  /** インストール済み IDE を検出する。 */
+  detectIdes: () => ipcRenderer.invoke(IpcChannels.SETTINGS_DETECT_IDES),
 });

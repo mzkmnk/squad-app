@@ -13,6 +13,7 @@ import type {
   WorkspaceCreateRequest,
   WorkspaceDeleteRequest,
   WorkspaceOpenRequest,
+  SettingsUpdateRequest,
 } from './ipc-channels.js';
 import type { IpcResult } from '../types/ipc-result.js';
 import { mapErrorToIpcResult, notFoundResult, successResult } from './ipc-error-mapper.js';
@@ -20,7 +21,11 @@ import type { SquadStore } from '../store/squad-store.js';
 import type { GitService } from '../git/git-service.js';
 import type { CodeWorkspaceService } from '../git/code-workspace-service.js';
 import type { SquadPaths } from '../store/squad-paths.js';
-import type { Repository, Workspace } from '../types/models.js';
+import type { Repository, Workspace, Settings } from '../types/models.js';
+import { settingsSchema } from '../types/models.js';
+import { IpcErrorCode } from '../types/ipc-error-code.js';
+import type { IdeDetectionResult } from '../ide/ide-detector.js';
+import { getIdeCommand, IDE_DEFINITIONS } from '../ide/ide-detector.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -91,6 +96,10 @@ export interface IpcHandlerDeps {
   codeWorkspaceService: CodeWorkspaceService;
   /** パス解決オブジェクト */
   paths: SquadPaths;
+  /** IDE 検出サービス */
+  ideDetector: {
+    detectInstalledIdes: () => Promise<IdeDetectionResult[]>;
+  };
 }
 
 /**
@@ -272,14 +281,6 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
         const codeWorkspaceEntries = resolvedEntries.map((e) => ({ repoName: e.repo.name }));
         await codeWorkspaceService.generate(workspace.name, codeWorkspaceEntries);
 
-        // 5. VS Code を起動
-        const codeWorkspaceFilePath = paths.codeWorkspaceFile(workspace.name);
-        try {
-          await execFileAsync('code', [codeWorkspaceFilePath]);
-        } catch {
-          // VS Code 起動失敗は Workspace 作成自体の失敗とはしない
-        }
-
         return successResult(workspace);
       } catch (error) {
         // ロールバック: 作成済み Worktree を逆順で削除
@@ -366,8 +367,90 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
           return notFoundResult('Workspace', id);
         }
         const codeWorkspaceFilePath = paths.codeWorkspaceFile(ws.name);
-        await execFileAsync('code', [codeWorkspaceFilePath]);
+
+        // 1. 設定から選択された IDE を取得
+        const settings = await store.getSettings();
+        const command = getIdeCommand(settings.selectedIde);
+        const definition = IDE_DEFINITIONS.find((d) => d.id === settings.selectedIde);
+        const displayName = definition?.displayName ?? settings.selectedIde;
+
+        // 2. IDE コマンドの存在チェック
+        if (!command) {
+          return {
+            success: false,
+            error: { code: IpcErrorCode.IDE_NOT_FOUND, message: `${displayName} is not installed` },
+          };
+        }
+
+        // 3. which で IDE のインストール確認
+        try {
+          await execFileAsync('which', [command]);
+        } catch {
+          return {
+            success: false,
+            error: { code: IpcErrorCode.IDE_NOT_FOUND, message: `${displayName} is not installed` },
+          };
+        }
+
+        // 4. IDE 起動
+        try {
+          await execFileAsync(command, [codeWorkspaceFilePath]);
+        } catch {
+          return {
+            success: false,
+            error: {
+              code: IpcErrorCode.IDE_LAUNCH_FAILED,
+              message: `Failed to launch ${displayName}`,
+            },
+          };
+        }
+
         return successResult(null);
+      } catch (error) {
+        return mapErrorToIpcResult(error);
+      }
+    },
+  );
+
+  // --- 設定操作 ---
+
+  ipcMain.handle(IpcChannels.SETTINGS_GET, async (): Promise<IpcResult<Settings>> => {
+    try {
+      const settings = await store.getSettings();
+      return successResult(settings);
+    } catch (error) {
+      return mapErrorToIpcResult(error);
+    }
+  });
+
+  ipcMain.handle(
+    IpcChannels.SETTINGS_UPDATE,
+    async (_event, { settings }: SettingsUpdateRequest): Promise<IpcResult<Settings>> => {
+      try {
+        const parsed = settingsSchema.safeParse(settings);
+        if (!parsed.success) {
+          return {
+            success: false,
+            error: {
+              code: IpcErrorCode.VALIDATION_ERROR,
+              message: parsed.error.issues.map((i) => i.message).join(', '),
+            },
+          };
+        }
+        const updated = await store.updateSettings(parsed.data);
+        return successResult(updated);
+      } catch (error) {
+        return mapErrorToIpcResult(error);
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.SETTINGS_DETECT_IDES,
+    async (): Promise<IpcResult<IdeDetectionResult[]>> => {
+      try {
+        const results = await deps.ideDetector.detectInstalledIdes();
+        return successResult(results);
       } catch (error) {
         return mapErrorToIpcResult(error);
       }

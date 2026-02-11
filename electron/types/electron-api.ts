@@ -8,7 +8,7 @@
  * Angular 側で自動的に型補完が有効になる。
  */
 
-import type { Repository, Workspace } from './models';
+import type { Repository, Workspace, Settings, IdeDetectionResult } from './models';
 import type { IpcResult } from './ipc-result';
 import type { WorkspaceCreateEntry } from '../ipc/ipc-channels';
 
@@ -126,6 +126,27 @@ export interface ElectronAPI {
    * @returns 成功時は data: null の IpcResult
    */
   openWorkspace: (id: string) => Promise<IpcResult<null>>;
+
+  // --- 設定操作 ---
+
+  /**
+   * 現在のアプリケーション設定を取得する。
+   * @returns 設定オブジェクトを含む IpcResult
+   */
+  getSettings: () => Promise<IpcResult<Settings>>;
+
+  /**
+   * アプリケーション設定を更新する。
+   * @param settings - 新しい設定オブジェクト
+   * @returns 更新後の設定オブジェクトを含む IpcResult
+   */
+  updateSettings: (settings: Settings) => Promise<IpcResult<Settings>>;
+
+  /**
+   * インストール済み IDE を検出する。
+   * @returns 各 IDE の検出結果の配列を含む IpcResult
+   */
+  detectIdes: () => Promise<IpcResult<IdeDetectionResult[]>>;
 }
 
 declare global {

@@ -20,6 +20,8 @@ export interface SquadPaths {
   readonly reposConfig: string;
   /** Workspace 設定ファイル（`<root>/config/workspaces.json`） */
   readonly workspacesConfig: string;
+  /** アプリケーション設定ファイル（`<root>/config/settings.json`） */
+  readonly settingsConfig: string;
 
   /**
    * Bare Repository のディレクトリパスを返す。
@@ -71,6 +73,7 @@ export function createSquadPaths(rootPath?: string): SquadPaths {
     workspacesDir: path.join(root, 'workspaces'),
     reposConfig: path.join(root, 'config', 'repos.json'),
     workspacesConfig: path.join(root, 'config', 'workspaces.json'),
+    settingsConfig: path.join(root, 'config', 'settings.json'),
 
     repoDir(name: string): string {
       return path.join(root, 'repos', `${name}.git`);

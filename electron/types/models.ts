@@ -62,3 +62,35 @@ export const workspacesConfigSchema = z.object({
 });
 
 export type WorkspacesConfig = z.infer<typeof workspacesConfigSchema>;
+
+// --- 設定 ---
+
+/** サポート対象 IDE の識別子 */
+export const ideIdSchema = z.enum(['vscode', 'webstorm', 'kiro']);
+export type IdeId = z.infer<typeof ideIdSchema>;
+
+/** アプリケーション設定 */
+export const settingsSchema = z.object({
+  /** 選択された IDE の識別子 */
+  selectedIde: ideIdSchema,
+});
+export type Settings = z.infer<typeof settingsSchema>;
+
+/** `~/.squad/config/settings.json` のスキーマ */
+export const settingsConfigSchema = z.object({
+  /** スキーマバージョン。現在は `1` 固定 */
+  version: z.number(),
+  /** アプリケーション設定 */
+  settings: settingsSchema,
+});
+export type SettingsConfig = z.infer<typeof settingsConfigSchema>;
+
+/** 各 IDE の検出結果 */
+export interface IdeDetectionResult {
+  /** IDE 識別子 */
+  id: IdeId;
+  /** 表示名 */
+  displayName: string;
+  /** インストール済みかどうか */
+  installed: boolean;
+}
