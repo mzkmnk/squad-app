@@ -1,6 +1,6 @@
 {
   "name": "squad-app",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Multi-repo workspace manager for development teams",
   "author": "m4i",
   "packageManager": "pnpm@9.15.4",
@@ -10,7 +10,7 @@
     "build": "ng build",
     "electron:build": "tsc -p electron/tsconfig.json && node electron/build-preload.mjs",
     "electron:serve": "pnpm electron:build && electron .",
-    "package": "pnpm build && pnpm electron:build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
+    "package": "pnpm build && pnpm electron:build && electron-builder",
     "package:mac": "pnpm package --mac",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -104,7 +104,7 @@
         "zip"
       ],
       "icon": "build/icon.png",
-      "identity": null,
+      "identity": "-",
       "category": "public.app-category.developer-tools"
     },
     "publish": null
