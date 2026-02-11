@@ -1,53 +1,55 @@
-<div hlmSidebarWrapper>
-  <hlm-sidebar collapsible="icon">
-    <div hlmSidebarHeader>
-      <div class="flex items-center gap-2 px-2 py-1.5">
-        <span class="text-lg font-bold group-data-[collapsible=icon]:hidden">Squad</span>
-      </div>
-    </div>
-    <div hlmSidebarContent>
-      <div hlmSidebarGroup>
-        <div hlmSidebarGroupLabel>ナビゲーション</div>
-        <div hlmSidebarGroupContent>
-          <ul hlmSidebarMenu>
-            <li hlmSidebarMenuItem>
-              <a
-                hlmSidebarMenuButton
-                routerLink="/workspaces"
-                routerLinkActive
-                #rlaWorkspaces="routerLinkActive"
-                [isActive]="rlaWorkspaces.isActive"
-              >
-                <ng-icon hlm name="lucideLayers" size="sm" />
-                <span>ワークスペース</span>
-              </a>
-            </li>
-            <li hlmSidebarMenuItem>
-              <a
-                hlmSidebarMenuButton
-                routerLink="/repos"
-                routerLinkActive
-                #rlaRepos="routerLinkActive"
-                [isActive]="rlaRepos.isActive"
-              >
-                <ng-icon hlm name="lucideGitFork" size="sm" />
-                <span>リポジトリ</span>
-              </a>
-            </li>
-          </ul>
+<ng-container *transloco="let t">
+  <div hlmSidebarWrapper>
+    <hlm-sidebar collapsible="icon">
+      <div hlmSidebarHeader>
+        <div class="flex items-center gap-2 px-2 py-1.5">
+          <span class="text-lg font-bold group-data-[collapsible=icon]:hidden">Squad</span>
         </div>
       </div>
-    </div>
-    <button hlmSidebarRail aria-label="サイドバーを切り替え"></button>
-  </hlm-sidebar>
+      <div hlmSidebarContent>
+        <div hlmSidebarGroup>
+          <div hlmSidebarGroupLabel>{{ t('nav.navigation') }}</div>
+          <div hlmSidebarGroupContent>
+            <ul hlmSidebarMenu>
+              <li hlmSidebarMenuItem>
+                <a
+                  hlmSidebarMenuButton
+                  routerLink="/workspaces"
+                  routerLinkActive
+                  #rlaWorkspaces="routerLinkActive"
+                  [isActive]="rlaWorkspaces.isActive"
+                >
+                  <ng-icon hlm name="lucideLayers" size="sm" />
+                  <span>{{ t('nav.workspaces') }}</span>
+                </a>
+              </li>
+              <li hlmSidebarMenuItem>
+                <a
+                  hlmSidebarMenuButton
+                  routerLink="/repos"
+                  routerLinkActive
+                  #rlaRepos="routerLinkActive"
+                  [isActive]="rlaRepos.isActive"
+                >
+                  <ng-icon hlm name="lucideGitFork" size="sm" />
+                  <span>{{ t('nav.repositories') }}</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <button hlmSidebarRail [attr.aria-label]="t('nav.toggleSidebar')"></button>
+    </hlm-sidebar>
 
-  <main hlmSidebarInset>
-    <header class="flex h-12 items-center gap-2 border-b px-4">
-      <button hlmSidebarTrigger aria-label="サイドバーを切り替え"></button>
-    </header>
-    <div class="flex-1">
-      <router-outlet />
-    </div>
-  </main>
-</div>
-<hlm-toaster />
+    <main hlmSidebarInset>
+      <header class="flex h-12 items-center gap-2 border-b px-4">
+        <button hlmSidebarTrigger [attr.aria-label]="t('nav.toggleSidebar')"></button>
+      </header>
+      <div class="flex-1">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
+  <hlm-toaster />
+</ng-container>

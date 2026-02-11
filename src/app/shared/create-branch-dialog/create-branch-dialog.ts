@@ -1,11 +1,12 @@
 import { Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { BrnDialogClose, BrnDialogRef } from '@spartan-ng/brain/dialog';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { BranchComboboxComponent } from '../branch-combobox/branch-combobox';
-import { checkBranchDuplicate, validateBranchName } from './branch-validation';
+import { validateBranchName, checkBranchDuplicate } from './branch-validation';
 import type { CreateBranchResult } from './create-branch-dialog-types';
 
 @Component({
@@ -14,6 +15,7 @@ import type { CreateBranchResult } from './create-branch-dialog-types';
   templateUrl: './create-branch-dialog.html',
   imports: [
     BrnDialogClose,
+    TranslocoDirective,
     BranchComboboxComponent,
     HlmButtonImports,
     HlmDialogImports,
@@ -23,6 +25,7 @@ import type { CreateBranchResult } from './create-branch-dialog-types';
 })
 export class CreateBranchDialogComponent {
   private readonly dialogRef = inject(BrnDialogRef);
+  private readonly transloco = inject(TranslocoService);
 
   /** リモートブランチ一覧 */
   readonly branches = input.required<string[]>();
@@ -33,10 +36,6 @@ export class CreateBranchDialogComponent {
   /** 作成確定時のイベント */
   readonly created = output<CreateBranchResult>();
 
-  /**
-   * 起点ブランチ（defaultBranch input に連動して初期化）。
-   * ユーザーが変更した後は defaultBranch の変更に追従しない。
-   */
   protected readonly baseBranch = linkedSignal<string, string | null>({
     source: this.defaultBranch,
     computation: (defaultBranch, previous) => previous?.value ?? defaultBranch,
@@ -45,21 +44,17 @@ export class CreateBranchDialogComponent {
   /** 新規ブランチ名 */
   protected readonly newBranchName = signal('');
 
-  /** 入力欄がタッチされたか（blur 後にエラー表示を開始） */
+  /** 入力欄がタッチされたか */
   protected readonly touched = signal(false);
 
-  /**
-   * 新規ブランチ名のバリデーションエラー。
-   * 空文字の場合は null を返す（displayError で touched 状態に応じて表示制御するため）。
-   */
   protected readonly branchNameError = computed(() => {
     const name = this.newBranchName();
     if (name === '') return null;
 
-    const validationError = validateBranchName(name);
+    const validationError = validateBranchName(name, this.transloco);
     if (validationError) return validationError;
 
-    const duplicateError = checkBranchDuplicate(name, this.branches());
+    const duplicateError = checkBranchDuplicate(name, this.branches(), this.transloco);
     if (duplicateError) return duplicateError;
 
     return null;
@@ -69,7 +64,7 @@ export class CreateBranchDialogComponent {
   protected readonly displayError = computed(() => {
     if (!this.touched()) return null;
     const name = this.newBranchName();
-    if (name === '') return 'ブランチ名を入力してください';
+    if (name === '') return this.transloco.translate('branches.validation.nameRequired');
     return this.branchNameError();
   });
 

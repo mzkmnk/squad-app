@@ -1,22 +1,24 @@
-<hlm-autocomplete
-  [value]="value()"
-  [(search)]="search"
-  [disabled]="disabled()"
-  [autoHighlight]="true"
-  (searchChange)="searchChange.emit($event)"
-  (valueChange)="valueChange.emit($event)"
->
-  <hlm-autocomplete-input [placeholder]="placeholder()" />
+<ng-container *transloco="let t">
+  <hlm-autocomplete
+    [value]="value()"
+    [(search)]="search"
+    [disabled]="disabled()"
+    [autoHighlight]="true"
+    (searchChange)="searchChange.emit($event)"
+    (valueChange)="valueChange.emit($event)"
+  >
+    <hlm-autocomplete-input [placeholder]="placeholder()" />
 
-  <hlm-autocomplete-content *hlmAutocompletePortal>
-    <hlm-autocomplete-empty>一致するブランチがありません</hlm-autocomplete-empty>
+    <hlm-autocomplete-content *hlmAutocompletePortal>
+      <hlm-autocomplete-empty>{{ t('branches.noMatch') }}</hlm-autocomplete-empty>
 
-    <div hlmAutocompleteList>
-      @for (branch of filteredBranches(); track branch) {
-        <hlm-autocomplete-item [value]="branch">
-          {{ branch }}
-        </hlm-autocomplete-item>
-      }
-    </div>
-  </hlm-autocomplete-content>
-</hlm-autocomplete>
+      <div hlmAutocompleteList>
+        @for (branch of filteredBranches(); track branch) {
+          <hlm-autocomplete-item [value]="branch">
+            {{ branch }}
+          </hlm-autocomplete-item>
+        }
+      </div>
+    </hlm-autocomplete-content>
+  </hlm-autocomplete>
+</ng-container>
