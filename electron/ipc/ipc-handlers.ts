@@ -147,7 +147,11 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
       try {
         const repoName = extractRepoName(remoteUrl);
         actualName = await gitService.cloneBare(remoteUrl, repoName);
-        const newRepo = await store.addRepository({ name: actualName, remoteUrl });
+        const newRepo = await store.addRepository({
+          name: actualName,
+          displayName: repoName,
+          remoteUrl,
+        });
         return successResult(newRepo);
       } catch (error) {
         // cloneBare 成功後に addRepository が失敗した場合、Bare Repository をクリーンアップ

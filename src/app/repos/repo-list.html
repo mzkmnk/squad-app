@@ -29,34 +29,29 @@
       } @else {
         <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4" role="list">
           @for (repo of repositories(); track repo.id) {
-            <div hlmCard size="sm" role="listitem" class="flex flex-col justify-between">
-              <div hlmCardHeader>
-                <h3 hlmCardTitle class="text-base">{{ repo.name }}</h3>
-                <p hlmCardDescription class="truncate text-xs">
-                  {{ repo.remoteUrl }}
-                </p>
-              </div>
-              <div hlmCardFooter class="flex flex-col items-stretch gap-2">
+            <div hlmCard size="sm" role="listitem" class="relative flex flex-col justify-between">
+              <div class="absolute top-2 right-2 z-10">
                 <hlm-alert-dialog>
                   <button
                     hlmAlertDialogTrigger
                     hlmBtn
-                    variant="destructive"
+                    variant="ghost"
                     size="icon"
+                    class="text-muted-foreground hover:text-destructive h-7 w-7"
                     [disabled]="deletingIds().has(repo.id)"
                     [attr.aria-label]="t('repos.deleteAriaLabel')"
                   >
                     @if (deletingIds().has(repo.id)) {
                       <hlm-spinner class="text-xs" />
                     } @else {
-                      <ng-icon hlm name="lucideTrash2" size="sm" />
+                      <ng-icon hlm name="lucideTrash2" size="xs" />
                     }
                   </button>
                   <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
                     <hlm-alert-dialog-header>
                       <h2 hlmAlertDialogTitle>{{ t('repos.deleteConfirmTitle') }}</h2>
                       <p hlmAlertDialogDescription>
-                        {{ t('repos.deleteConfirmDescription', { name: repo.name }) }}
+                        {{ t('repos.deleteConfirmDescription', { name: repo.displayName }) }}
                       </p>
                     </hlm-alert-dialog-header>
                     <hlm-alert-dialog-footer>
@@ -69,7 +64,16 @@
                     </hlm-alert-dialog-footer>
                   </hlm-alert-dialog-content>
                 </hlm-alert-dialog>
-                <span class="text-muted-foreground self-end text-[10px]">
+              </div>
+
+              <div hlmCardHeader>
+                <h3 hlmCardTitle class="truncate pr-8 text-base">{{ repo.displayName }}</h3>
+                <p hlmCardDescription class="truncate text-xs">
+                  {{ repo.remoteUrl }}
+                </p>
+              </div>
+              <div hlmCardFooter>
+                <span class="text-muted-foreground ml-auto text-[10px]">
                   {{ t('repos.registeredAt', { date: (repo.registeredAt | date: 'yyyy/MM/dd') }) }}
                 </span>
               </div>

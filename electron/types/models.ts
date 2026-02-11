@@ -6,9 +6,10 @@ import { z } from 'zod';
 export const repositorySchema = z.object({
   /** UUID v4。リポジトリの一意識別子 */
   id: z.string(),
-  /** リポジトリ名（URL から抽出、例: `backend`） */
+  /** リポジトリ名（suffix 付き内部名、ディレクトリ名に使用。例: `backend-a1b2c3d4`） */
   name: z.string(),
-  /** リモートリポジトリ URL（例: `https://github.com/org/backend.git`） */
+  /** UI 表示用の名前（ユーザーが認識しやすい元の名前。例: `backend`） */
+  displayName: z.string(),
   remoteUrl: z.string(),
   /** ISO 8601 形式の登録日時 */
   registeredAt: z.string(),
@@ -29,8 +30,10 @@ export type WorkspaceEntry = z.infer<typeof workspaceEntrySchema>;
 export const workspaceSchema = z.object({
   /** UUID v4。Workspace の一意識別子 */
   id: z.string(),
-  /** Workspace 名（ユーザー入力、例: `feature-payment`） */
+  /** Workspace 名（suffix 付き内部名、ディレクトリ名に使用。例: `feature-payment-a1b2c3d4`） */
   name: z.string(),
+  /** UI 表示用の名前（ユーザーが入力した元の名前。例: `feature-payment`） */
+  displayName: z.string(),
   /** Workspace に含まれるリポジトリ × ブランチの構成 */
   entries: z.array(workspaceEntrySchema),
   /** ISO 8601 形式の作成日時 */
@@ -45,7 +48,7 @@ export type Workspace = z.infer<typeof workspaceSchema>;
 
 /** `~/.squad/config/repos.json` のスキーマ */
 export const reposConfigSchema = z.object({
-  /** スキーマバージョン。現在は `1` 固定 */
+  /** スキーマバージョン（マイグレーションにより変動） */
   version: z.number(),
   /** 登録済みリポジトリの配列 */
   repositories: z.array(repositorySchema),
@@ -55,7 +58,7 @@ export type ReposConfig = z.infer<typeof reposConfigSchema>;
 
 /** `~/.squad/config/workspaces.json` のスキーマ */
 export const workspacesConfigSchema = z.object({
-  /** スキーマバージョン。現在は `1` 固定 */
+  /** スキーマバージョン（マイグレーションにより変動） */
   version: z.number(),
   /** 作成済み Workspace の配列 */
   workspaces: z.array(workspaceSchema),

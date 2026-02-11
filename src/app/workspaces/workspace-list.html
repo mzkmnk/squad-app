@@ -73,7 +73,7 @@
                     <hlm-alert-dialog-header>
                       <h2 hlmAlertDialogTitle>{{ t('workspaces.deleteConfirmTitle') }}</h2>
                       <p hlmAlertDialogDescription>
-                        {{ t('workspaces.deleteConfirmDescription', { name: ws.name }) }}
+                        {{ t('workspaces.deleteConfirmDescription', { name: ws.displayName }) }}
                       </p>
                     </hlm-alert-dialog-header>
                     <hlm-alert-dialog-footer>
@@ -89,7 +89,7 @@
               </div>
 
               <div hlmCardHeader>
-                <h3 hlmCardTitle class="truncate pr-8 text-base">{{ ws.name }}</h3>
+                <h3 hlmCardTitle class="truncate pr-8 text-base">{{ ws.displayName }}</h3>
               </div>
 
               <div hlmCardContent class="flex flex-wrap gap-1.5">

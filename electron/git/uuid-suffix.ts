@@ -12,3 +12,8 @@ export function generateSuffix(): string {
 export function appendSuffix(name: string, suffix: string): string {
   return `${name}-${suffix}`;
 }
+
+/** suffix 付き名前から suffix を除去する（`name-<8桁hex>` → `name`） */
+export function stripSuffix(name: string): string {
+  return name.replace(/-[0-9a-f]{8}$/, '');
+}

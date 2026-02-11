@@ -36,6 +36,7 @@ describe('RepositoryService', () => {
   const mockRepo: Repository = {
     id: 'repo-1',
     name: 'backend',
+    displayName: 'backend',
     remoteUrl: 'https://github.com/org/backend.git',
     registeredAt: '2026-02-08T12:00:00.000Z',
   };

@@ -53,6 +53,7 @@ function makeRepo(overrides: Partial<Repository> = {}): Repository {
   return {
     id: 'repo-1',
     name: 'backend',
+    displayName: 'backend',
     remoteUrl: 'https://github.com/org/backend.git',
     registeredAt: '2026-02-08T12:00:00.000Z',
     ...overrides,
@@ -63,6 +64,7 @@ function makeWorkspace(overrides: Partial<Workspace> = {}): Workspace {
   return {
     id: 'ws-1',
     name: 'feature-payment-abcd1234',
+    displayName: 'feature-payment',
     entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
     createdAt: '2026-02-08T12:30:00.000Z',
     updatedAt: '2026-02-08T12:30:00.000Z',
@@ -229,6 +231,7 @@ describe('repo:add', () => {
     );
     expect(deps.store.addRepository).toHaveBeenCalledWith({
       name: 'backend-abcd1234',
+      displayName: 'backend',
       remoteUrl: 'https://github.com/org/backend.git',
     });
     expect(result).toEqual({ success: true, data: repo });
