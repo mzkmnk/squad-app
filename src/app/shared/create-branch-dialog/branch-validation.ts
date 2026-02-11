@@ -1,38 +1,40 @@
+import type { TranslocoService } from '@jsverse/transloco';
+
 /**
  * ブランチ名を Git 命名規則に基づいて検証する。
  * @returns エラーメッセージ。有効な場合は null
  */
-export function validateBranchName(branch: string): string | null {
+export function validateBranchName(branch: string, transloco: TranslocoService): string | null {
   if (branch.length === 0) {
-    return 'ブランチ名を入力してください';
+    return transloco.translate('branches.validation.nameRequired');
   }
 
   if (branch.startsWith('.')) {
-    return 'ブランチ名の先頭に "." は使用できません';
+    return transloco.translate('branches.validation.noLeadingDot');
   }
 
   if (branch.startsWith('-')) {
-    return 'ブランチ名の先頭に "-" は使用できません';
+    return transloco.translate('branches.validation.noLeadingDash');
   }
 
   if (branch.endsWith('/')) {
-    return 'ブランチ名の末尾に "/" は使用できません';
+    return transloco.translate('branches.validation.noTrailingSlash');
   }
 
   if (branch.endsWith('.lock')) {
-    return 'ブランチ名の末尾に ".lock" は使用できません';
+    return transloco.translate('branches.validation.noTrailingLock');
   }
 
   if (branch.includes('..')) {
-    return 'ブランチ名に ".." は使用できません';
+    return transloco.translate('branches.validation.noDoubleDot');
   }
 
   if (branch.includes('//')) {
-    return 'ブランチ名に連続する "/" は使用できません';
+    return transloco.translate('branches.validation.noDoubleSlash');
   }
 
   if (/[\s~^:?*[\\\x00-\x1f\x7f]/.test(branch)) {
-    return 'ブランチ名に使用できない文字が含まれています';
+    return transloco.translate('branches.validation.invalidChars');
   }
 
   return null;
@@ -42,9 +44,13 @@ export function validateBranchName(branch: string): string | null {
  * 既存ブランチ一覧との重複を検証する。
  * @returns エラーメッセージ。重複がない場合は null
  */
-export function checkBranchDuplicate(branch: string, existingBranches: string[]): string | null {
+export function checkBranchDuplicate(
+  branch: string,
+  existingBranches: string[],
+  transloco: TranslocoService,
+): string | null {
   if (existingBranches.includes(branch)) {
-    return '同名のブランチが既に存在します';
+    return transloco.translate('branches.validation.duplicate');
   }
   return null;
 }

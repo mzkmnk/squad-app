@@ -1,4 +1,5 @@
 import { Component, inject, output, signal } from '@angular/core';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { toast } from 'ngx-sonner';
 import { BrnDialogClose, BrnDialogRef } from '@spartan-ng/brain/dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
@@ -15,6 +16,7 @@ import type { Repository } from '../../../electron/types/models';
   templateUrl: './repo-add-form.html',
   imports: [
     BrnDialogClose,
+    TranslocoDirective,
     HlmButtonImports,
     HlmDialogImports,
     HlmFieldImports,
@@ -25,6 +27,7 @@ import type { Repository } from '../../../electron/types/models';
 export class RepoAddFormComponent {
   private readonly repoService = inject(RepositoryService);
   private readonly dialogRef = inject(BrnDialogRef);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly remoteUrl = signal('');
   protected readonly submitting = signal(false);
@@ -35,10 +38,10 @@ export class RepoAddFormComponent {
   private validate(): string | null {
     const url = this.remoteUrl().trim();
     if (url.length === 0) {
-      return 'リポジトリURLを入力してください';
+      return this.transloco.translate('repos.validation.urlRequired');
     }
     if (!url.startsWith('https://') && !url.startsWith('git@')) {
-      return 'HTTPS または SSH 形式のURLを入力してください';
+      return this.transloco.translate('repos.validation.urlInvalidFormat');
     }
     return null;
   }

@@ -1,5 +1,6 @@
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { BrnDialogClose, BrnDialogRef } from '@spartan-ng/brain/dialog';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
 import { lucideGitBranchPlus, lucideLoader } from '@ng-icons/lucide';
 import { toast } from 'ngx-sonner';
@@ -39,6 +40,7 @@ export type BranchSelection =
   templateUrl: './workspace-create-form.html',
   imports: [
     BrnDialogClose,
+    TranslocoDirective,
     BranchComboboxComponent,
     CreateBranchDialogComponent,
     HlmButtonImports,
@@ -57,6 +59,7 @@ export class WorkspaceCreateFormComponent {
   private readonly repoService = inject(RepositoryService);
   private readonly workspaceService = inject(WorkspaceService);
   private readonly dialogRef = inject(BrnDialogRef);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly workspaceName = signal('');
   protected readonly repositories = signal<Repository[]>([]);
@@ -139,7 +142,6 @@ export class WorkspaceCreateFormComponent {
     this.selectionError.set(null);
   }
 
-  /** 既存ブランチを選択する（コンボボックスからの選択） */
   protected selectBranch(repoId: string, branch: string | null): void {
     this.branchSelections.update((map) => {
       const next = new Map(map);
@@ -153,7 +155,6 @@ export class WorkspaceCreateFormComponent {
     this.selectionError.set(null);
   }
 
-  /** 新規ブランチ情報を設定する（ダイアログからの戻り値） */
   protected setNewBranch(repoId: string, info: NewBranchInfo): void {
     this.branchSelections.update((map) => {
       const next = new Map(map);
@@ -163,7 +164,6 @@ export class WorkspaceCreateFormComponent {
     this.selectionError.set(null);
   }
 
-  /** 新規ブランチ作成ダイアログの確定結果を処理する */
   protected onBranchCreated(repoId: string, result: CreateBranchResult): void {
     this.setNewBranch(repoId, {
       sourceBranch: result.baseBranch,
@@ -171,13 +171,11 @@ export class WorkspaceCreateFormComponent {
     });
   }
 
-  /** テンプレート用: リポジトリのデフォルトブランチを取得する */
   protected getDefaultBranch(repoId: string): string {
     const branches = this.branchesMap().get(repoId) ?? [];
     return branches.includes('main') ? 'main' : (branches[0] ?? 'main');
   }
 
-  /** テンプレート用: リポジトリの現在の選択ブランチ名を取得する */
   protected getSelectedBranchName(repoId: string): string | null {
     const selection = this.branchSelections().get(repoId);
     if (!selection) return null;
@@ -188,22 +186,26 @@ export class WorkspaceCreateFormComponent {
     let valid = true;
     const name = this.workspaceName().trim();
     if (name.length === 0) {
-      this.nameError.set('Workspace名を入力してください');
+      this.nameError.set(this.transloco.translate('workspaces.validation.nameRequired'));
       valid = false;
     } else if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
-      this.nameError.set('英数字、ハイフン、アンダースコアのみ使用できます');
+      this.nameError.set(this.transloco.translate('workspaces.validation.nameInvalidChars'));
       valid = false;
     } else {
       this.nameError.set(null);
     }
 
     if (this.selectedRepoIds().size === 0) {
-      this.selectionError.set('1つ以上のリポジトリを選択してください');
+      this.selectionError.set(
+        this.transloco.translate('workspaces.validation.selectAtLeastOneRepo'),
+      );
       valid = false;
     } else {
       for (const id of this.selectedRepoIds()) {
         if (!this.branchSelections().has(id)) {
-          this.selectionError.set('全てのリポジトリでブランチを選択してください');
+          this.selectionError.set(
+            this.transloco.translate('workspaces.validation.selectBranchForAll'),
+          );
           valid = false;
           break;
         }
@@ -241,7 +243,9 @@ export class WorkspaceCreateFormComponent {
     );
 
     if (result.success) {
-      toast.success(`Workspace「${result.data.name}」を作成しました`);
+      toast.success(
+        this.transloco.translate('workspaces.createSuccess', { name: result.data.name }),
+      );
       this.created.emit(result.data);
       this.dialogRef.close();
     } else {

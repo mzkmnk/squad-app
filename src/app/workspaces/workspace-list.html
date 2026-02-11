@@ -1,100 +1,109 @@
-<div class="mx-auto max-w-6xl p-6">
-  <div class="mb-6 flex items-center justify-between">
-    <h1 class="text-2xl font-bold">ワークスペース</h1>
-    <hlm-dialog>
-      <button hlmBtn hlmDialogTrigger>
-        <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
-        作成
-      </button>
-      <hlm-dialog-content *hlmDialogPortal class="sm:max-w-xl">
-        <app-workspace-create-form (created)="onWorkspaceCreated($event)" />
-      </hlm-dialog-content>
-    </hlm-dialog>
-  </div>
-
-  @if (loading()) {
-    <div class="flex items-center justify-center gap-2 py-8">
-      <hlm-spinner />
-      <span class="text-muted-foreground text-sm">読み込み中...</span>
+<ng-container *transloco="let t">
+  <div class="mx-auto max-w-6xl p-6">
+    <div class="mb-6 flex items-center justify-between">
+      <h1 class="text-2xl font-bold">{{ t('workspaces.title') }}</h1>
+      <hlm-dialog>
+        <button hlmBtn hlmDialogTrigger>
+          <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
+          {{ t('common.create') }}
+        </button>
+        <hlm-dialog-content *hlmDialogPortal class="sm:max-w-xl">
+          <app-workspace-create-form (created)="onWorkspaceCreated($event)" />
+        </hlm-dialog-content>
+      </hlm-dialog>
     </div>
-  } @else {
-    @if (workspaces().length === 0) {
-      <section hlmCard class="text-center">
-        <div hlmCardHeader>
-          <h3 hlmCardTitle>ワークスペースがありません</h3>
-          <p hlmCardDescription>「作成」ボタンから新しいワークスペースを作成してください。</p>
-        </div>
-      </section>
+
+    @if (loading()) {
+      <div class="flex items-center justify-center gap-2 py-8">
+        <hlm-spinner />
+        <span class="text-muted-foreground text-sm">{{ t('common.loading') }}</span>
+      </div>
     } @else {
-      <div class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4" role="list">
-        @for (ws of workspaces(); track ws.id) {
-          <div hlmCard role="listitem" class="flex flex-col justify-between">
-            <div hlmCardHeader class="pb-2">
-              <h3 hlmCardTitle class="truncate text-base">{{ ws.name }}</h3>
-              <p hlmCardDescription class="text-xs">
-                作成日: {{ ws.createdAt | date: 'yyyy/MM/dd HH:mm' }}
-              </p>
-            </div>
+      @if (workspaces().length === 0) {
+        <section hlmCard class="text-center">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle>{{ t('workspaces.empty') }}</h3>
+            <p hlmCardDescription>{{ t('workspaces.emptyDescription') }}</p>
+          </div>
+        </section>
+      } @else {
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4" role="list">
+          @for (ws of workspaces(); track ws.id) {
+            <div hlmCard role="listitem" class="flex flex-col justify-between">
+              <div hlmCardHeader class="pb-2">
+                <h3 hlmCardTitle class="truncate text-base">{{ ws.name }}</h3>
+                <p hlmCardDescription class="text-xs">
+                  {{
+                    t('workspaces.createdAt', { date: (ws.createdAt | date: 'yyyy/MM/dd HH:mm') })
+                  }}
+                </p>
+              </div>
 
-            <div hlmCardContent class="flex flex-wrap gap-1.5 pb-2">
-              @for (entry of ws.entries; track entry.repositoryId) {
-                <span class="bg-muted inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs">
-                  <span class="font-medium">{{ getRepoName(entry.repositoryId) }}</span>
-                  <ng-icon hlm name="lucideGitBranch" size="xs" class="text-muted-foreground" />
-                  <span class="text-muted-foreground">{{ entry.branch }}</span>
-                </span>
-              }
-            </div>
-
-            <div hlmCardFooter class="flex gap-2 pt-2">
-              <button
-                hlmBtn
-                variant="outline"
-                size="icon"
-                (click)="openWorkspace(ws.id)"
-                [disabled]="openingIds().has(ws.id) || deletingIds().has(ws.id)"
-                aria-label="VS Code で開く"
-              >
-                @if (openingIds().has(ws.id)) {
-                  <hlm-spinner class="text-xs" />
-                } @else {
-                  <ng-icon hlm name="lucideExternalLink" size="sm" />
+              <div hlmCardContent class="flex flex-wrap gap-1.5 pb-2">
+                @for (entry of ws.entries; track entry.repositoryId) {
+                  <span
+                    class="bg-muted inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs"
+                  >
+                    <span class="font-medium">{{ getRepoName(entry.repositoryId) }}</span>
+                    <ng-icon hlm name="lucideGitBranch" size="xs" class="text-muted-foreground" />
+                    <span class="text-muted-foreground">{{ entry.branch }}</span>
+                  </span>
                 }
-              </button>
+              </div>
 
-              <hlm-alert-dialog>
+              <div hlmCardFooter class="flex gap-2 pt-2">
                 <button
-                  hlmAlertDialogTrigger
                   hlmBtn
-                  variant="destructive"
+                  variant="outline"
                   size="icon"
-                  [disabled]="deletingIds().has(ws.id) || openingIds().has(ws.id)"
-                  aria-label="削除"
+                  (click)="openWorkspace(ws.id)"
+                  [disabled]="openingIds().has(ws.id) || deletingIds().has(ws.id)"
+                  [attr.aria-label]="t('workspaces.openInVscode')"
                 >
-                  @if (deletingIds().has(ws.id)) {
+                  @if (openingIds().has(ws.id)) {
                     <hlm-spinner class="text-xs" />
                   } @else {
-                    <ng-icon hlm name="lucideTrash2" size="sm" />
+                    <ng-icon hlm name="lucideExternalLink" size="sm" />
                   }
                 </button>
-                <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
-                  <hlm-alert-dialog-header>
-                    <h2 hlmAlertDialogTitle>ワークスペースを削除しますか？</h2>
-                    <p hlmAlertDialogDescription>
-                      「{{ ws.name }}」を削除すると、関連する Worktree と .code-workspace
-                      ファイルがディスクから完全に消去されます。この操作は取り消せません。
-                    </p>
-                  </hlm-alert-dialog-header>
-                  <hlm-alert-dialog-footer>
-                    <button hlmAlertDialogCancel (click)="ctx.close()">キャンセル</button>
-                    <button hlmAlertDialogAction (click)="deleteWorkspace(ws.id)">削除する</button>
-                  </hlm-alert-dialog-footer>
-                </hlm-alert-dialog-content>
-              </hlm-alert-dialog>
+
+                <hlm-alert-dialog>
+                  <button
+                    hlmAlertDialogTrigger
+                    hlmBtn
+                    variant="destructive"
+                    size="icon"
+                    [disabled]="deletingIds().has(ws.id) || openingIds().has(ws.id)"
+                    [attr.aria-label]="t('workspaces.deleteAriaLabel')"
+                  >
+                    @if (deletingIds().has(ws.id)) {
+                      <hlm-spinner class="text-xs" />
+                    } @else {
+                      <ng-icon hlm name="lucideTrash2" size="sm" />
+                    }
+                  </button>
+                  <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
+                    <hlm-alert-dialog-header>
+                      <h2 hlmAlertDialogTitle>{{ t('workspaces.deleteConfirmTitle') }}</h2>
+                      <p hlmAlertDialogDescription>
+                        {{ t('workspaces.deleteConfirmDescription', { name: ws.name }) }}
+                      </p>
+                    </hlm-alert-dialog-header>
+                    <hlm-alert-dialog-footer>
+                      <button hlmAlertDialogCancel (click)="ctx.close()">
+                        {{ t('common.cancel') }}
+                      </button>
+                      <button hlmAlertDialogAction (click)="deleteWorkspace(ws.id)">
+                        {{ t('workspaces.deleteAction') }}
+                      </button>
+                    </hlm-alert-dialog-footer>
+                  </hlm-alert-dialog-content>
+                </hlm-alert-dialog>
+              </div>
             </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
     }
-  }
-</div>
+  </div>
+</ng-container>

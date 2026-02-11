@@ -1,76 +1,79 @@
-<div class="mx-auto max-w-6xl p-6">
-  <div class="mb-6 flex items-center justify-between">
-    <h1 class="text-2xl font-bold">リポジトリ</h1>
-    <hlm-dialog>
-      <button hlmBtn hlmDialogTrigger>
-        <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
-        追加
-      </button>
-      <hlm-dialog-content *hlmDialogPortal>
-        <app-repo-add-form (submitted)="onRepoAdded($event)" />
-      </hlm-dialog-content>
-    </hlm-dialog>
-  </div>
-
-  @if (loading()) {
-    <div class="flex items-center justify-center gap-2 py-8">
-      <hlm-spinner />
-      <span class="text-muted-foreground text-sm">読み込み中...</span>
+<ng-container *transloco="let t">
+  <div class="mx-auto max-w-6xl p-6">
+    <div class="mb-6 flex items-center justify-between">
+      <h1 class="text-2xl font-bold">{{ t('repos.title') }}</h1>
+      <hlm-dialog>
+        <button hlmBtn hlmDialogTrigger>
+          <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
+          {{ t('common.add') }}
+        </button>
+        <hlm-dialog-content *hlmDialogPortal>
+          <app-repo-add-form (submitted)="onRepoAdded($event)" />
+        </hlm-dialog-content>
+      </hlm-dialog>
     </div>
-  } @else {
-    @if (repositories().length === 0) {
-      <section hlmCard class="text-center">
-        <div hlmCardHeader>
-          <h3 hlmCardTitle>リポジトリが登録されていません</h3>
-          <p hlmCardDescription>「追加」ボタンからリポジトリを登録してください。</p>
-        </div>
-      </section>
-    } @else {
-      <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4" role="list">
-        @for (repo of repositories(); track repo.id) {
-          <div hlmCard role="listitem" class="flex flex-col justify-between">
-            <div hlmCardHeader class="pb-2">
-              <h3 hlmCardTitle class="text-base">{{ repo.name }}</h3>
-              <p hlmCardDescription class="truncate text-xs">
-                {{ repo.remoteUrl }}
-              </p>
-            </div>
-            <div hlmCardFooter class="pt-2">
-              <hlm-alert-dialog>
-                <button
-                  hlmAlertDialogTrigger
-                  hlmBtn
-                  variant="destructive"
-                  size="icon"
-                  [disabled]="deletingIds().has(repo.id)"
-                  aria-label="削除"
-                >
-                  @if (deletingIds().has(repo.id)) {
-                    <hlm-spinner class="text-xs" />
-                  } @else {
-                    <ng-icon hlm name="lucideTrash2" size="sm" />
-                  }
-                </button>
-                <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
-                  <hlm-alert-dialog-header>
-                    <h2 hlmAlertDialogTitle>リポジトリを削除しますか？</h2>
-                    <p hlmAlertDialogDescription>
-                      「{{ repo.name }}」を削除すると、Bare Repository
-                      がディスクから完全に消去されます。この操作は取り消せません。
-                    </p>
-                  </hlm-alert-dialog-header>
-                  <hlm-alert-dialog-footer>
-                    <button hlmAlertDialogCancel (click)="ctx.close()">キャンセル</button>
-                    <button hlmAlertDialogAction (click)="removeRepository(repo.id)">
-                      削除する
-                    </button>
-                  </hlm-alert-dialog-footer>
-                </hlm-alert-dialog-content>
-              </hlm-alert-dialog>
-            </div>
-          </div>
-        }
+
+    @if (loading()) {
+      <div class="flex items-center justify-center gap-2 py-8">
+        <hlm-spinner />
+        <span class="text-muted-foreground text-sm">{{ t('common.loading') }}</span>
       </div>
+    } @else {
+      @if (repositories().length === 0) {
+        <section hlmCard class="text-center">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle>{{ t('repos.empty') }}</h3>
+            <p hlmCardDescription>{{ t('repos.emptyDescription') }}</p>
+          </div>
+        </section>
+      } @else {
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4" role="list">
+          @for (repo of repositories(); track repo.id) {
+            <div hlmCard role="listitem" class="flex flex-col justify-between">
+              <div hlmCardHeader class="pb-2">
+                <h3 hlmCardTitle class="text-base">{{ repo.name }}</h3>
+                <p hlmCardDescription class="truncate text-xs">
+                  {{ repo.remoteUrl }}
+                </p>
+              </div>
+              <div hlmCardFooter class="pt-2">
+                <hlm-alert-dialog>
+                  <button
+                    hlmAlertDialogTrigger
+                    hlmBtn
+                    variant="destructive"
+                    size="icon"
+                    [disabled]="deletingIds().has(repo.id)"
+                    [attr.aria-label]="t('repos.deleteAriaLabel')"
+                  >
+                    @if (deletingIds().has(repo.id)) {
+                      <hlm-spinner class="text-xs" />
+                    } @else {
+                      <ng-icon hlm name="lucideTrash2" size="sm" />
+                    }
+                  </button>
+                  <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
+                    <hlm-alert-dialog-header>
+                      <h2 hlmAlertDialogTitle>{{ t('repos.deleteConfirmTitle') }}</h2>
+                      <p hlmAlertDialogDescription>
+                        {{ t('repos.deleteConfirmDescription', { name: repo.name }) }}
+                      </p>
+                    </hlm-alert-dialog-header>
+                    <hlm-alert-dialog-footer>
+                      <button hlmAlertDialogCancel (click)="ctx.close()">
+                        {{ t('common.cancel') }}
+                      </button>
+                      <button hlmAlertDialogAction (click)="removeRepository(repo.id)">
+                        {{ t('repos.deleteAction') }}
+                      </button>
+                    </hlm-alert-dialog-footer>
+                  </hlm-alert-dialog-content>
+                </hlm-alert-dialog>
+              </div>
+            </div>
+          }
+        </div>
+      }
     }
-  }
-</div>
+  </div>
+</ng-container>

@@ -1,43 +1,47 @@
-<form class="flex flex-col gap-4" (submit)="onCreate(); $event.preventDefault()">
-  <hlm-dialog-header>
-    <h3 hlmDialogTitle>新規ブランチを作成</h3>
-    <p hlmDialogDescription>起点ブランチを選択し、新しいブランチ名を入力してください。</p>
-  </hlm-dialog-header>
+<ng-container *transloco="let t">
+  <form class="flex flex-col gap-4" (submit)="onCreate(); $event.preventDefault()">
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle>{{ t('branches.createTitle') }}</h3>
+      <p hlmDialogDescription>{{ t('branches.createDescription') }}</p>
+    </hlm-dialog-header>
 
-  <!-- 起点ブランチ -->
-  <div hlmField>
-    <label hlmFieldLabel for="base-branch">起点ブランチ</label>
-    <app-branch-combobox
-      id="base-branch"
-      [branches]="branches()"
-      [value]="baseBranch()"
-      placeholder="起点ブランチを検索..."
-      (valueChange)="baseBranch.set($event)"
-    />
-  </div>
+    <!-- 起点ブランチ -->
+    <div hlmField>
+      <label hlmFieldLabel for="base-branch">{{ t('branches.baseLabel') }}</label>
+      <app-branch-combobox
+        id="base-branch"
+        [branches]="branches()"
+        [value]="baseBranch()"
+        [placeholder]="t('branches.basePlaceholder')"
+        (valueChange)="baseBranch.set($event)"
+      />
+    </div>
 
-  <!-- 新規ブランチ名 -->
-  <div hlmField [attr.data-invalid]="displayError() ? true : null">
-    <label hlmFieldLabel for="new-branch-name">新規ブランチ名</label>
-    <input
-      hlmInput
-      id="new-branch-name"
-      type="text"
-      placeholder="feature/new-api"
-      [value]="newBranchName()"
-      (input)="newBranchName.set($any($event.target).value)"
-      (blur)="touched.set(true)"
-      [attr.aria-invalid]="displayError() ? true : null"
-      [attr.aria-describedby]="displayError() ? 'new-branch-name-error' : null"
-      autocomplete="off"
-    />
-    @if (displayError()) {
-      <hlm-field-error id="new-branch-name-error">{{ displayError() }}</hlm-field-error>
-    }
-  </div>
+    <!-- 新規ブランチ名 -->
+    <div hlmField [attr.data-invalid]="displayError() ? true : null">
+      <label hlmFieldLabel for="new-branch-name">{{ t('branches.newNameLabel') }}</label>
+      <input
+        hlmInput
+        id="new-branch-name"
+        type="text"
+        [placeholder]="t('branches.newNamePlaceholder')"
+        [value]="newBranchName()"
+        (input)="newBranchName.set($any($event.target).value)"
+        (blur)="touched.set(true)"
+        [attr.aria-invalid]="displayError() ? true : null"
+        [attr.aria-describedby]="displayError() ? 'new-branch-name-error' : null"
+        autocomplete="off"
+      />
+      @if (displayError()) {
+        <hlm-field-error id="new-branch-name-error">{{ displayError() }}</hlm-field-error>
+      }
+    </div>
 
-  <div hlmDialogFooter>
-    <button hlmBtn variant="outline" type="button" brnDialogClose>キャンセル</button>
-    <button hlmBtn type="submit" [disabled]="!canCreate()">作成</button>
-  </div>
-</form>
+    <div hlmDialogFooter>
+      <button hlmBtn variant="outline" type="button" brnDialogClose>
+        {{ t('common.cancel') }}
+      </button>
+      <button hlmBtn type="submit" [disabled]="!canCreate()">{{ t('common.create') }}</button>
+    </div>
+  </form>
+</ng-container>

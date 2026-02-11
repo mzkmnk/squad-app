@@ -1,0 +1,95 @@
+{
+  "nav": {
+    "navigation": "ナビゲーション",
+    "workspaces": "ワークスペース",
+    "repositories": "リポジトリ",
+    "toggleSidebar": "サイドバーを切り替え"
+  },
+  "common": {
+    "create": "作成",
+    "add": "追加",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "confirm": "確認",
+    "loading": "読み込み中...",
+    "syncing": "同期中...",
+    "creating": "作成中...",
+    "cloning": "クローン中...",
+    "register": "登録",
+    "selectRepo": "{{ name }} を選択"
+  },
+  "repos": {
+    "title": "リポジトリ",
+    "empty": "リポジトリが登録されていません",
+    "emptyDescription": "「追加」ボタンからリポジトリを登録してください。",
+    "deleteConfirmTitle": "リポジトリを削除しますか？",
+    "deleteConfirmDescription": "「{{ name }}」を削除すると、Bare Repository がディスクから完全に消去されます。この操作は取り消せません。",
+    "deleteAction": "削除する",
+    "deleteAriaLabel": "削除",
+    "addTitle": "リポジトリを追加",
+    "addDescription": "リモートリポジトリの URL を入力してください。HTTPS と SSH 形式に対応しています。",
+    "urlLabel": "リポジトリ URL",
+    "urlPlaceholder": "https://github.com/org/repo.git",
+    "validation": {
+      "urlRequired": "リポジトリURLを入力してください",
+      "urlInvalidFormat": "HTTPS または SSH 形式のURLを入力してください"
+    }
+  },
+  "workspaces": {
+    "title": "ワークスペース",
+    "empty": "ワークスペースがありません",
+    "emptyDescription": "「作成」ボタンから新しいワークスペースを作成してください。",
+    "createdAt": "作成日: {{ date }}",
+    "openInVscode": "VS Code で開く",
+    "openSuccess": "VS Code を起動しました",
+    "deleteAriaLabel": "削除",
+    "deleteConfirmTitle": "ワークスペースを削除しますか？",
+    "deleteConfirmDescription": "「{{ name }}」を削除すると、関連する Worktree と .code-workspace ファイルがディスクから完全に消去されます。この操作は取り消せません。",
+    "deleteAction": "削除する",
+    "deleteSuccess": "Workspace「{{ name }}」を削除しました",
+    "unknownRepo": "不明なリポジトリ",
+    "createTitle": "Workspace を作成",
+    "createDescription": "Workspace 名を入力し、含めるリポジトリとブランチを選択してください。",
+    "nameLabel": "Workspace 名",
+    "namePlaceholder": "feature-payment",
+    "reposAndBranches": "リポジトリとブランチ",
+    "noReposRegistered": "リポジトリが登録されていません。先にリポジトリを登録してください。",
+    "fetchingBranches": "ブランチを取得中...",
+    "createNewBranch": "新規ブランチを作成",
+    "createSuccess": "Workspace「{{ name }}」を作成しました",
+    "validation": {
+      "nameRequired": "Workspace名を入力してください",
+      "nameInvalidChars": "英数字、ハイフン、アンダースコアのみ使用できます",
+      "selectAtLeastOneRepo": "1つ以上のリポジトリを選択してください",
+      "selectBranchForAll": "全てのリポジトリでブランチを選択してください"
+    }
+  },
+  "branches": {
+    "searchPlaceholder": "ブランチを検索...",
+    "noMatch": "一致するブランチがありません",
+    "createTitle": "新規ブランチを作成",
+    "createDescription": "起点ブランチを選択し、新しいブランチ名を入力してください。",
+    "baseLabel": "起点ブランチ",
+    "basePlaceholder": "起点ブランチを検索...",
+    "newNameLabel": "新規ブランチ名",
+    "newNamePlaceholder": "feature/new-api",
+    "validation": {
+      "nameRequired": "ブランチ名を入力してください",
+      "noLeadingDot": "ブランチ名の先頭に \".\" は使用できません",
+      "noLeadingDash": "ブランチ名の先頭に \"-\" は使用できません",
+      "noTrailingSlash": "ブランチ名の末尾に \"/\" は使用できません",
+      "noTrailingLock": "ブランチ名の末尾に \".lock\" は使用できません",
+      "noDoubleDot": "ブランチ名に \"..\" は使用できません",
+      "noDoubleSlash": "ブランチ名に連続する \"/\" は使用できません",
+      "invalidChars": "ブランチ名に使用できない文字が含まれています",
+      "duplicate": "同名のブランチが既に存在します"
+    }
+  },
+  "errors": {
+    "VALIDATION_ERROR": "バリデーションエラー: {{ message }}",
+    "REPOSITORY_EXISTS": "このリポジトリは既に登録されています。",
+    "GIT_OPERATION_FAILED": "Git 操作に失敗しました: {{ message }}",
+    "NOT_FOUND": "指定されたリソースが見つかりません。",
+    "INTERNAL_ERROR": "予期しないエラーが発生しました。"
+  }
+}

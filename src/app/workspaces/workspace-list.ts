@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
 import { lucideExternalLink, lucideGitBranch, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
 import { toast } from 'ngx-sonner';
@@ -20,6 +21,7 @@ import type { Repository, Workspace } from '../../../electron/types/models';
   templateUrl: './workspace-list.html',
   imports: [
     DatePipe,
+    TranslocoDirective,
     WorkspaceCreateFormComponent,
     HlmAlertDialogImports,
     HlmButtonImports,
@@ -33,6 +35,7 @@ import type { Repository, Workspace } from '../../../electron/types/models';
 export class WorkspaceListComponent {
   private readonly workspaceService = inject(WorkspaceService);
   private readonly repoService = inject(RepositoryService);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly workspaces = signal<Workspace[]>([]);
   protected readonly repositories = signal<Repository[]>([]);
@@ -76,7 +79,9 @@ export class WorkspaceListComponent {
   }
 
   protected getRepoName(repositoryId: string): string {
-    return this.repoMap().get(repositoryId)?.name ?? '不明なリポジトリ';
+    return (
+      this.repoMap().get(repositoryId)?.name ?? this.transloco.translate('workspaces.unknownRepo')
+    );
   }
 
   protected onWorkspaceCreated(ws: Workspace): void {
@@ -88,7 +93,7 @@ export class WorkspaceListComponent {
 
     const result = await this.workspaceService.openWorkspace(id);
     if (result.success) {
-      toast.success('VS Code を起動しました');
+      toast.success(this.transloco.translate('workspaces.openSuccess'));
     } else {
       toast.error(result.error.message);
     }
@@ -102,11 +107,12 @@ export class WorkspaceListComponent {
 
   protected async deleteWorkspace(id: string): Promise<void> {
     this.deletingIds.update((ids) => new Set([...ids, id]));
+    const ws = this.workspaces().find((w) => w.id === id);
 
     const result = await this.workspaceService.deleteWorkspace(id);
     if (result.success) {
-      this.workspaces.update((ws) => ws.filter((w) => w.id !== id));
-      toast.success('Workspace を削除しました');
+      this.workspaces.update((list) => list.filter((w) => w.id !== id));
+      toast.success(this.transloco.translate('workspaces.deleteSuccess', { name: ws?.name ?? '' }));
     } else {
       toast.error(result.error.message);
     }

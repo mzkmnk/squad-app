@@ -1,11 +1,12 @@
 import { Component, computed, input, output, signal } from '@angular/core';
+import { TranslocoDirective } from '@jsverse/transloco';
 import { HlmAutocompleteImports } from '@spartan-ng/helm/autocomplete';
 
 @Component({
   selector: 'app-branch-combobox',
   standalone: true,
   templateUrl: './branch-combobox.html',
-  imports: [HlmAutocompleteImports],
+  imports: [TranslocoDirective, HlmAutocompleteImports],
 })
 export class BranchComboboxComponent {
   /** フィルタリング対象のブランチ名一覧 */

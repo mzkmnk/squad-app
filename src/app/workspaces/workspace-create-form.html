@@ -1,132 +1,136 @@
-<form class="flex flex-col gap-4" (submit)="onSubmit(); $event.preventDefault()">
-  <hlm-dialog-header>
-    <h3 hlmDialogTitle>Workspace を作成</h3>
-    <p hlmDialogDescription>Workspace 名を入力し、含めるリポジトリとブランチを選択してください。</p>
-  </hlm-dialog-header>
+<ng-container *transloco="let t">
+  <form class="flex flex-col gap-4" (submit)="onSubmit(); $event.preventDefault()">
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle>{{ t('workspaces.createTitle') }}</h3>
+      <p hlmDialogDescription>{{ t('workspaces.createDescription') }}</p>
+    </hlm-dialog-header>
 
-  <!-- Workspace 名 -->
-  <div hlmField [attr.data-invalid]="nameError() ? true : null">
-    <label hlmFieldLabel for="workspace-name">Workspace 名</label>
-    <input
-      hlmInput
-      id="workspace-name"
-      type="text"
-      placeholder="feature-payment"
-      [value]="workspaceName()"
-      (input)="workspaceName.set($any($event.target).value); nameError.set(null)"
-      [disabled]="creating()"
-      [attr.aria-invalid]="nameError() ? true : null"
-      autocomplete="off"
-    />
-    @if (nameError()) {
-      <hlm-field-error>{{ nameError() }}</hlm-field-error>
-    }
-  </div>
+    <!-- Workspace 名 -->
+    <div hlmField [attr.data-invalid]="nameError() ? true : null">
+      <label hlmFieldLabel for="workspace-name">{{ t('workspaces.nameLabel') }}</label>
+      <input
+        hlmInput
+        id="workspace-name"
+        type="text"
+        [placeholder]="t('workspaces.namePlaceholder')"
+        [value]="workspaceName()"
+        (input)="workspaceName.set($any($event.target).value); nameError.set(null)"
+        [disabled]="creating()"
+        [attr.aria-invalid]="nameError() ? true : null"
+        autocomplete="off"
+      />
+      @if (nameError()) {
+        <hlm-field-error>{{ nameError() }}</hlm-field-error>
+      }
+    </div>
 
-  <brn-separator hlmSeparator />
+    <brn-separator hlmSeparator />
 
-  <!-- リポジトリ選択 + ブランチ指定 -->
-  <div>
-    <h4 class="mb-2 text-sm font-semibold">リポジトリとブランチ</h4>
+    <!-- リポジトリ選択 + ブランチ指定 -->
+    <div>
+      <h4 class="mb-2 text-sm font-semibold">{{ t('workspaces.reposAndBranches') }}</h4>
 
-    @if (loadingRepos()) {
-      <div class="flex items-center justify-center gap-2 py-4">
-        <hlm-spinner />
-        <span class="text-muted-foreground text-sm">読み込み中...</span>
-      </div>
-    } @else if (repositories().length === 0) {
-      <p class="text-muted-foreground text-sm">
-        リポジトリが登録されていません。先にリポジトリを登録してください。
-      </p>
-    } @else {
-      <div class="flex max-h-64 flex-col gap-1 overflow-y-auto">
-        @for (repo of repositories(); track repo.id) {
-          <div class="rounded-md px-2 py-2">
-            <div class="flex items-start gap-3">
-              <hlm-checkbox
-                [checked]="selectedRepoIds().has(repo.id)"
-                (checkedChange)="toggleRepo(repo.id)"
-                [disabled]="creating()"
-                [attr.aria-label]="repo.name + ' を選択'"
-              />
-              <div class="flex-1">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium">{{ repo.name }}</span>
-                  @if (fetchingIds().has(repo.id)) {
-                    <ng-icon
-                      hlm
-                      name="lucideLoader"
-                      size="xs"
-                      class="text-muted-foreground animate-spin"
-                    />
-                    <span class="text-muted-foreground text-xs">同期中...</span>
-                  }
-                </div>
-                <p class="text-muted-foreground truncate text-xs">{{ repo.remoteUrl }}</p>
-
-                @if (selectedRepoIds().has(repo.id)) {
-                  <div class="mt-2">
-                    @if (branchesMap().has(repo.id)) {
-                      <div class="flex items-start gap-2">
-                        <div class="min-w-0 flex-1">
-                          <app-branch-combobox
-                            [branches]="branchesMap().get(repo.id) ?? []"
-                            [value]="getSelectedBranchName(repo.id)"
-                            [disabled]="creating()"
-                            (valueChange)="selectBranch(repo.id, $event)"
-                          />
-                        </div>
-                        <hlm-dialog>
-                          <button
-                            hlmBtn
-                            variant="outline"
-                            type="button"
-                            [disabled]="creating()"
-                            hlmDialogTrigger
-                            aria-label="新規ブランチを作成"
-                          >
-                            <ng-icon hlm name="lucideGitBranchPlus" size="sm" />
-                          </button>
-                          <hlm-dialog-content *hlmDialogPortal>
-                            <app-create-branch-dialog
-                              [branches]="branchesMap().get(repo.id) ?? []"
-                              [defaultBranch]="getDefaultBranch(repo.id)"
-                              (created)="onBranchCreated(repo.id, $event)"
-                            />
-                          </hlm-dialog-content>
-                        </hlm-dialog>
-                      </div>
-                    } @else {
-                      <div class="flex items-center gap-2 py-1">
-                        <hlm-spinner class="text-xs" />
-                        <span class="text-muted-foreground text-xs">ブランチを取得中...</span>
-                      </div>
+      @if (loadingRepos()) {
+        <div class="flex items-center justify-center gap-2 py-4">
+          <hlm-spinner />
+          <span class="text-muted-foreground text-sm">{{ t('common.loading') }}</span>
+        </div>
+      } @else if (repositories().length === 0) {
+        <p class="text-muted-foreground text-sm">
+          {{ t('workspaces.noReposRegistered') }}
+        </p>
+      } @else {
+        <div class="flex max-h-64 flex-col gap-1 overflow-y-auto">
+          @for (repo of repositories(); track repo.id) {
+            <div class="rounded-md px-2 py-2">
+              <div class="flex items-start gap-3">
+                <hlm-checkbox
+                  [checked]="selectedRepoIds().has(repo.id)"
+                  (checkedChange)="toggleRepo(repo.id)"
+                  [disabled]="creating()"
+                  [attr.aria-label]="t('common.selectRepo', { name: repo.name })"
+                />
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium">{{ repo.name }}</span>
+                    @if (fetchingIds().has(repo.id)) {
+                      <ng-icon
+                        hlm
+                        name="lucideLoader"
+                        size="xs"
+                        class="text-muted-foreground animate-spin"
+                      />
+                      <span class="text-muted-foreground text-xs">{{ t('common.syncing') }}</span>
                     }
                   </div>
-                }
+                  <p class="text-muted-foreground truncate text-xs">{{ repo.remoteUrl }}</p>
+
+                  @if (selectedRepoIds().has(repo.id)) {
+                    <div class="mt-2">
+                      @if (branchesMap().has(repo.id)) {
+                        <div class="flex items-start gap-2">
+                          <div class="min-w-0 flex-1">
+                            <app-branch-combobox
+                              [branches]="branchesMap().get(repo.id) ?? []"
+                              [value]="getSelectedBranchName(repo.id)"
+                              [disabled]="creating()"
+                              (valueChange)="selectBranch(repo.id, $event)"
+                            />
+                          </div>
+                          <hlm-dialog>
+                            <button
+                              hlmBtn
+                              variant="outline"
+                              type="button"
+                              [disabled]="creating()"
+                              hlmDialogTrigger
+                              [attr.aria-label]="t('workspaces.createNewBranch')"
+                            >
+                              <ng-icon hlm name="lucideGitBranchPlus" size="sm" />
+                            </button>
+                            <hlm-dialog-content *hlmDialogPortal>
+                              <app-create-branch-dialog
+                                [branches]="branchesMap().get(repo.id) ?? []"
+                                [defaultBranch]="getDefaultBranch(repo.id)"
+                                (created)="onBranchCreated(repo.id, $event)"
+                              />
+                            </hlm-dialog-content>
+                          </hlm-dialog>
+                        </div>
+                      } @else {
+                        <div class="flex items-center gap-2 py-1">
+                          <hlm-spinner class="text-xs" />
+                          <span class="text-muted-foreground text-xs">{{
+                            t('workspaces.fetchingBranches')
+                          }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
             </div>
-          </div>
-        }
-      </div>
-    }
-
-    @if (selectionError()) {
-      <p class="text-destructive mt-2 text-sm">{{ selectionError() }}</p>
-    }
-  </div>
-
-  <div hlmDialogFooter>
-    <button hlmBtn variant="outline" type="button" [disabled]="creating()" brnDialogClose>
-      キャンセル
-    </button>
-    <button hlmBtn type="submit" [disabled]="!canSubmit()">
-      @if (creating()) {
-        <hlm-spinner class="mr-1 text-xs" />
-        作成中...
-      } @else {
-        作成
+          }
+        </div>
       }
-    </button>
-  </div>
-</form>
+
+      @if (selectionError()) {
+        <p class="text-destructive mt-2 text-sm">{{ selectionError() }}</p>
+      }
+    </div>
+
+    <div hlmDialogFooter>
+      <button hlmBtn variant="outline" type="button" [disabled]="creating()" brnDialogClose>
+        {{ t('common.cancel') }}
+      </button>
+      <button hlmBtn type="submit" [disabled]="!canSubmit()">
+        @if (creating()) {
+          <hlm-spinner class="mr-1 text-xs" />
+          {{ t('common.creating') }}
+        } @else {
+          {{ t('common.create') }}
+        }
+      </button>
+    </div>
+  </form>
+</ng-container>
