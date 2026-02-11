@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
@@ -18,6 +19,7 @@ import type { Repository } from '../../../electron/types/models';
   standalone: true,
   templateUrl: './repo-list.html',
   imports: [
+    DatePipe,
     TranslocoDirective,
     RepoAddFormComponent,
     HlmButtonImports,

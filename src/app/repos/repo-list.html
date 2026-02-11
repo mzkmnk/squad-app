@@ -29,14 +29,14 @@
       } @else {
         <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4" role="list">
           @for (repo of repositories(); track repo.id) {
-            <div hlmCard role="listitem" class="flex flex-col justify-between">
-              <div hlmCardHeader class="pb-2">
+            <div hlmCard size="sm" role="listitem" class="flex flex-col justify-between">
+              <div hlmCardHeader>
                 <h3 hlmCardTitle class="text-base">{{ repo.name }}</h3>
                 <p hlmCardDescription class="truncate text-xs">
                   {{ repo.remoteUrl }}
                 </p>
               </div>
-              <div hlmCardFooter class="pt-2">
+              <div hlmCardFooter class="flex flex-col items-stretch gap-2">
                 <hlm-alert-dialog>
                   <button
                     hlmAlertDialogTrigger
@@ -69,6 +69,9 @@
                     </hlm-alert-dialog-footer>
                   </hlm-alert-dialog-content>
                 </hlm-alert-dialog>
+                <span class="text-muted-foreground self-end text-[10px]">
+                  {{ t('repos.registeredAt', { date: (repo.registeredAt | date: 'yyyy/MM/dd') }) }}
+                </span>
               </div>
             </div>
           }

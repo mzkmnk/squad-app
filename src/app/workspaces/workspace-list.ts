@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideExternalLink, lucideGitBranch, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
+import { lucideGitBranch, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
 import { toast } from 'ngx-sonner';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
@@ -30,7 +30,7 @@ import type { Repository, Workspace } from '../../../electron/types/models';
     HlmIconImports,
     HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideExternalLink, lucideGitBranch, lucidePlus, lucideTrash2 })],
+  providers: [provideIcons({ lucideGitBranch, lucidePlus, lucideTrash2 })],
 })
 export class WorkspaceListComponent {
   private readonly workspaceService = inject(WorkspaceService);
