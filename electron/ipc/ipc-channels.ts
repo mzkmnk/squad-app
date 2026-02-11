@@ -1,3 +1,5 @@
+import type { Settings } from '../types/models.js';
+
 /**
  * IPC チャネル名を一元管理する定数オブジェクト。
  *
@@ -45,6 +47,15 @@ export const IpcChannels = {
   WORKSPACE_DELETE: 'workspace:delete',
   /** ID を指定して Workspace を VS Code で開く */
   WORKSPACE_OPEN: 'workspace:open',
+
+  // 設定操作
+
+  /** 現在の設定を取得する */
+  SETTINGS_GET: 'settings:get',
+  /** 設定を更新する */
+  SETTINGS_UPDATE: 'settings:update',
+  /** インストール済み IDE の検出結果を取得する */
+  SETTINGS_DETECT_IDES: 'settings:detect-ides',
 } as const;
 
 /**
@@ -173,4 +184,15 @@ export interface WorkspaceDeleteRequest {
 export interface WorkspaceOpenRequest {
   /** 開く対象の Workspace UUID */
   id: string;
+}
+
+// --- 設定リクエスト型 ---
+
+/**
+ * `settings:update` チャネルのリクエスト。
+ * 設定オブジェクト全体を上書きする。
+ */
+export interface SettingsUpdateRequest {
+  /** 更新する設定 */
+  settings: Settings;
 }

@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { createSquadPaths } from './squad-paths.js';
 
 import { SquadStore } from './squad-store.js';
-import type { ReposConfig, WorkspacesConfig } from '../types/models.js';
+import type { ReposConfig, WorkspacesConfig, SettingsConfig } from '../types/models.js';
 import * as uuidSuffix from '../git/uuid-suffix.js';
 
 let tmpDir: string;
@@ -440,5 +440,91 @@ describe('SquadStore - エッジケース', () => {
     await fs.writeFile(paths.workspacesConfig, JSON.stringify({ version: 999, workspaces: [] }));
 
     await expect(store.getWorkspaces()).rejects.toThrow(/version/i);
+  });
+});
+
+// --- Settings CRUD テスト ---
+
+describe('SquadStore - Settings CRUD', () => {
+  beforeEach(async () => {
+    await store.initialize();
+  });
+
+  it('initialize() で settings.json がデフォルト値で作成される', async () => {
+    const paths = createSquadPaths(tmpDir);
+    const raw = await fs.readFile(paths.settingsConfig, 'utf-8');
+    const data = JSON.parse(raw) as SettingsConfig;
+
+    expect(data).toEqual({
+      version: 1,
+      settings: { selectedIde: 'vscode' },
+    });
+  });
+
+  it('getSettings() でデフォルト設定が取得できる', async () => {
+    const settings = await store.getSettings();
+
+    expect(settings).toEqual({ selectedIde: 'vscode' });
+  });
+
+  it('updateSettings() で設定が更新される', async () => {
+    const updated = await store.updateSettings({ selectedIde: 'webstorm' });
+
+    expect(updated).toEqual({ selectedIde: 'webstorm' });
+  });
+
+  it('updateSettings() の結果が settings.json に永続化される', async () => {
+    await store.updateSettings({ selectedIde: 'kiro' });
+
+    const store2 = new SquadStore(tmpDir);
+    await store2.initialize();
+    const settings = await store2.getSettings();
+
+    expect(settings).toEqual({ selectedIde: 'kiro' });
+  });
+
+  it('settings.json が存在しない場合、getSettings() はデフォルト値を返す', async () => {
+    const paths = createSquadPaths(tmpDir);
+    await fs.rm(paths.settingsConfig);
+
+    const settings = await store.getSettings();
+
+    expect(settings).toEqual({ selectedIde: 'vscode' });
+  });
+
+  it('settings.json のパースに失敗した場合、デフォルト値で再初期化される（EC-2）', async () => {
+    const paths = createSquadPaths(tmpDir);
+    await fs.writeFile(paths.settingsConfig, 'invalid json content');
+
+    const settings = await store.getSettings();
+
+    expect(settings).toEqual({ selectedIde: 'vscode' });
+
+    // 再初期化されたファイルが正しいことを確認
+    const raw = await fs.readFile(paths.settingsConfig, 'utf-8');
+    const data = JSON.parse(raw) as SettingsConfig;
+    expect(data).toEqual({ version: 1, settings: { selectedIde: 'vscode' } });
+  });
+
+  it('settings.json の version が不正な場合、デフォルト値で再初期化される', async () => {
+    const paths = createSquadPaths(tmpDir);
+    await fs.writeFile(
+      paths.settingsConfig,
+      JSON.stringify({ version: 999, settings: { selectedIde: 'webstorm' } }),
+    );
+
+    const settings = await store.getSettings();
+
+    // version 不正のため、ファイルに書かれた webstorm ではなくデフォルト値 vscode に再初期化される
+    expect(settings).toEqual({ selectedIde: 'vscode' });
+  });
+
+  it('initialize() を複数回呼び出しても既存の settings.json が上書きされない', async () => {
+    await store.updateSettings({ selectedIde: 'webstorm' });
+
+    await store.initialize();
+
+    const settings = await store.getSettings();
+    expect(settings).toEqual({ selectedIde: 'webstorm' });
   });
 });

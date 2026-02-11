@@ -11,68 +11,68 @@ Electron メインプロセス側に設定永続化基盤、IDE 自動検出サ�
 
 ### 1. データモデル・型定義の追加
 
-- [ ] `electron/types/models.ts` に `ideIdSchema`, `settingsSchema`, `settingsConfigSchema` を追加
-- [ ] `electron/types/ipc-error-code.ts` に `IDE_NOT_FOUND`, `IDE_LAUNCH_FAILED` を追加
-- [ ] テスト: 既存テストが壊れていないことを確認（`pnpm test:electron`）
+- [x] `electron/types/models.ts` に `ideIdSchema`, `settingsSchema`, `settingsConfigSchema` を追加
+- [x] `electron/types/ipc-error-code.ts` に `IDE_NOT_FOUND`, `IDE_LAUNCH_FAILED` を追加
+- [x] テスト: 既存テストが壊れていないことを確認（`pnpm test:electron`）
 
 ### 2. パス定義の拡張
 
-- [ ] `electron/store/squad-paths.ts` の `SquadPaths` インターフェースに `settingsConfig` を追加
-- [ ] `createSquadPaths()` の実装に `settingsConfig` パスを追加
-- [ ] テスト: 既存の `squad-paths.spec.ts` が壊れていないことを確認
+- [x] `electron/store/squad-paths.ts` の `SquadPaths` インターフェースに `settingsConfig` を追加
+- [x] `createSquadPaths()` の実装に `settingsConfig` パスを追加
+- [x] テスト: 既存の `squad-paths.spec.ts` が壊れていないことを確認
 
 ### 3. ストア CRUD の拡張
 
-- [ ] テスト: `electron/store/squad-store.spec.ts` に `getSettings` / `updateSettings` / `initialize` 拡張のテストを追加
+- [x] テスト: `electron/store/squad-store.spec.ts` に `getSettings` / `updateSettings` / `initialize` 拡張のテストを追加
   - 正常取得
   - ファイル未存在時のデフォルト初期化
   - パース失敗時の再初期化（EC-2）
   - 正常更新
   - 更新後の値が永続化されていること
-- [ ] `electron/store/squad-store.ts` に `getSettings()`, `updateSettings()` を実装
-- [ ] `initialize()` を拡張し、`settings.json` が存在しない場合にデフォルト値で初期化
-- [ ] テスト実行・パス確認
+- [x] `electron/store/squad-store.ts` に `getSettings()`, `updateSettings()` を実装
+- [x] `initialize()` を拡張し、`settings.json` が存在しない場合にデフォルト値で初期化
+- [x] テスト実行・パス確認
 
 ### 4. IDE Detector の実装
 
-- [ ] テスト: `electron/ide/ide-detector.spec.ts` を作成
+- [x] テスト: `electron/ide/ide-detector.spec.ts` を作成
   - `detectInstalledIdes`: 全 IDE インストール済み / 一部のみ / 全て未インストール
   - `getIdeCommand`: 各 IDE ID に対する正しいコマンド返却 / 未知の ID で `undefined`
-- [ ] `electron/ide/ide-detector.ts` を新規作成（`IDE_DEFINITIONS`, `detectInstalledIdes`, `getIdeCommand`）
-- [ ] テスト実行・パス確認
+- [x] `electron/ide/ide-detector.ts` を新規作成（`IDE_DEFINITIONS`, `detectInstalledIdes`, `getIdeCommand`）
+- [x] テスト実行・パス確認
 
 ### 5. IPC チャネル・リクエスト型の追加
 
-- [ ] `electron/ipc/ipc-channels.ts` に `SETTINGS_GET`, `SETTINGS_UPDATE`, `SETTINGS_DETECT_IDES` チャネルと `SettingsUpdateRequest` 型を追加
+- [x] `electron/ipc/ipc-channels.ts` に `SETTINGS_GET`, `SETTINGS_UPDATE`, `SETTINGS_DETECT_IDES` チャネルと `SettingsUpdateRequest` 型を追加
 
 ### 6. IPC ハンドラーの追加・変更
 
-- [ ] テスト: `electron/ipc/ipc-handlers.spec.ts` に以下を追加
+- [x] テスト: `electron/ipc/ipc-handlers.spec.ts` に以下を追加
   - `settings:get` — 正常取得 / ストアエラー時の `INTERNAL_ERROR`
   - `settings:update` — 正常更新 / 不正な設定値時の `VALIDATION_ERROR`
   - `settings:detect-ides` — 検出結果の正常返却
   - `WORKSPACE_CREATE` 変更 — IDE 起動コードが削除されていること
   - `WORKSPACE_OPEN` 変更 — 設定 IDE で起動 / `IDE_NOT_FOUND` / `IDE_LAUNCH_FAILED`
-- [ ] `IpcHandlerDeps` に `ideDetector` を追加
-- [ ] `ipc-handlers.ts` に設定ハンドラー 3 つを実装
-- [ ] `WORKSPACE_CREATE` から IDE 起動コードを削除
-- [ ] `WORKSPACE_OPEN` を設定ベースの IDE 起動に変更
-- [ ] テスト実行・パス確認
+- [x] `IpcHandlerDeps` に `ideDetector` を追加
+- [x] `ipc-handlers.ts` に設定ハンドラー 3 つを実装
+- [x] `WORKSPACE_CREATE` から IDE 起動コードを削除
+- [x] `WORKSPACE_OPEN` を設定ベースの IDE 起動に変更
+- [x] テスト実行・パス確認
 
 ### 7. Preload & 型定義の追加
 
-- [ ] `electron/types/electron-api.ts` に `getSettings`, `updateSettings`, `detectIdes` の型定義を追加
-- [ ] `electron/preload.ts` に設定 API 3 メソッドを追加
+- [x] `electron/types/electron-api.ts` に `getSettings`, `updateSettings`, `detectIdes` の型定義を追加
+- [x] `electron/preload.ts` に設定 API 3 メソッドを追加
 
 ### 8. main.ts の更新
 
-- [ ] `electron/main.ts` の `initializeServices()` で `ideDetector` を `registerIpcHandlers` に渡す
+- [x] `electron/main.ts` の `initializeServices()` で `ideDetector` を `registerIpcHandlers` に渡す
 
 ### 9. 最終確認
 
-- [ ] 全テスト実行・パス確認（`pnpm test:electron`）
-- [ ] lint 確認（`pnpm lint`）
-- [ ] ビルド確認（`pnpm electron:build`）
+- [x] 全テスト実行・パス確認（`pnpm test:electron`）
+- [x] lint 確認（`pnpm lint`）
+- [x] ビルド確認（`pnpm electron:build`）
 
 ## ストーリートレーサビリティ
 

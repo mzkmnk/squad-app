@@ -1,12 +1,24 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
-import type { Repository, Workspace, ReposConfig, WorkspacesConfig } from '../types/models.js';
-import { reposConfigSchema, workspacesConfigSchema } from '../types/models.js';
+import type {
+  Repository,
+  Workspace,
+  ReposConfig,
+  WorkspacesConfig,
+  Settings,
+} from '../types/models.js';
+import {
+  reposConfigSchema,
+  workspacesConfigSchema,
+  settingsConfigSchema,
+} from '../types/models.js';
 import { createSquadPaths, type SquadPaths } from './squad-paths.js';
 import { generateSuffix, appendSuffix, MAX_SUFFIX_RETRY } from '../git/uuid-suffix.js';
 
 const CURRENT_VERSION = 1;
+
+const DEFAULT_SETTINGS: Settings = { selectedIde: 'vscode' };
 
 /**
  * `~/.squad` 配下の JSON ストアに対する CRUD 操作を提供する。
@@ -47,6 +59,10 @@ export class SquadStore {
     await this.initConfigFile(this.paths.workspacesConfig, {
       version: CURRENT_VERSION,
       workspaces: [],
+    });
+    await this.initConfigFile(this.paths.settingsConfig, {
+      version: CURRENT_VERSION,
+      settings: DEFAULT_SETTINGS,
     });
   }
 
@@ -204,11 +220,46 @@ export class SquadStore {
     await this.writeAtomically(this.paths.workspacesConfig, config);
   }
 
+  // --- 設定操作 ---
+
+  /**
+   * 現在の設定を取得する。
+   *
+   * @remarks パース失敗時はデフォルト値で再初期化して返す（EC-2）。
+   * @returns 現在の設定
+   */
+  async getSettings(): Promise<Settings> {
+    try {
+      return await this.readSettingsConfig();
+    } catch {
+      // パース失敗・ファイル未存在時はデフォルト値で再初期化
+      await this.writeAtomically(this.paths.settingsConfig, {
+        version: CURRENT_VERSION,
+        settings: DEFAULT_SETTINGS,
+      });
+      return { ...DEFAULT_SETTINGS };
+    }
+  }
+
+  /**
+   * 設定を更新する。
+   *
+   * @param settings - 新しい設定
+   * @returns 更新後の設定
+   */
+  async updateSettings(settings: Settings): Promise<Settings> {
+    await this.writeAtomically(this.paths.settingsConfig, {
+      version: CURRENT_VERSION,
+      settings,
+    });
+    return { ...settings };
+  }
+
   // --- プライベートメソッド ---
 
   private async initConfigFile(
     filePath: string,
-    defaultData: ReposConfig | WorkspacesConfig,
+    defaultData: ReposConfig | WorkspacesConfig | { version: number; settings: Settings },
   ): Promise<void> {
     try {
       await fs.access(filePath);
@@ -240,6 +291,17 @@ export class SquadStore {
       );
     }
     return { version: config.version, workspaces: [...config.workspaces] };
+  }
+
+  private async readSettingsConfig(): Promise<Settings> {
+    const raw = await fs.readFile(this.paths.settingsConfig, 'utf-8');
+    const config = settingsConfigSchema.parse(JSON.parse(raw));
+    if (config.version !== CURRENT_VERSION) {
+      throw new Error(
+        `Unsupported settings.json version: ${String(config.version)}. Expected version ${String(CURRENT_VERSION)}.`,
+      );
+    }
+    return { ...config.settings };
   }
 
   private async writeAtomically(filePath: string, data: unknown): Promise<void> {

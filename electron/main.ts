@@ -6,6 +6,7 @@ import { createSquadPaths } from './store/squad-paths.js';
 import { GitService } from './git/git-service.js';
 import { CodeWorkspaceService } from './git/code-workspace-service.js';
 import { registerIpcHandlers } from './ipc/ipc-handlers.js';
+import { detectInstalledIdes } from './ide/ide-detector.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,7 +19,13 @@ async function initializeServices(): Promise<void> {
   const gitService = new GitService(paths);
   const codeWorkspaceService = new CodeWorkspaceService(paths);
 
-  registerIpcHandlers({ store, gitService, codeWorkspaceService, paths });
+  registerIpcHandlers({
+    store,
+    gitService,
+    codeWorkspaceService,
+    paths,
+    ideDetector: { detectInstalledIdes },
+  });
 }
 
 function createWindow(): void {

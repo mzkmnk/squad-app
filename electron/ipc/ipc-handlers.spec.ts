@@ -81,6 +81,8 @@ function createMockDeps(): IpcHandlerDeps {
       getWorkspace: vi.fn(),
       addWorkspace: vi.fn(),
       removeWorkspace: vi.fn(),
+      getSettings: vi.fn(),
+      updateSettings: vi.fn(),
     } as unknown as IpcHandlerDeps['store'],
     gitService: {
       cloneBare: vi.fn(),
@@ -99,6 +101,9 @@ function createMockDeps(): IpcHandlerDeps {
       codeWorkspaceFile: vi.fn().mockReturnValue('/home/.squad/workspaces/ws/ws.code-workspace'),
       workspaceDir: vi.fn().mockReturnValue('/home/.squad/workspaces/ws'),
     } as unknown as IpcHandlerDeps['paths'],
+    ideDetector: {
+      detectInstalledIdes: vi.fn().mockResolvedValue([]),
+    },
   };
 }
 
@@ -727,13 +732,15 @@ describe('workspace:delete', () => {
 // ============================================================
 
 describe('workspace:open', () => {
-  it('存在する Workspace の .code-workspace ファイルパスで code コマンドが実行される', async () => {
+  it('設定された IDE で Workspace が開かれる', async () => {
     const ws = makeWorkspace();
     vi.mocked(deps.store.getWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.store.getSettings).mockResolvedValue({ selectedIde: 'vscode' });
 
     const result = await invoke('workspace:open', { id: 'ws-1' });
 
     expect(deps.paths.codeWorkspaceFile).toHaveBeenCalledWith(ws.name);
+    expect(execFileMock).toHaveBeenCalledWith('which', ['code'], expect.any(Function));
     expect(execFileMock).toHaveBeenCalledWith(
       'code',
       ['/home/.squad/workspaces/ws/ws.code-workspace'],
@@ -753,12 +760,13 @@ describe('workspace:open', () => {
     });
   });
 
-  it('code コマンドが失敗した場合にエラーが返る', async () => {
+  it('IDE がインストールされていない場合に IDE_NOT_FOUND が返る', async () => {
     const ws = makeWorkspace();
     vi.mocked(deps.store.getWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.store.getSettings).mockResolvedValue({ selectedIde: 'vscode' });
     execFileMock.mockImplementation(
       (_cmd: string, _args: string[], cb: (err: unknown, result: unknown) => void) => {
-        cb(new Error('code command not found'), null);
+        cb(new Error('not found'), null);
       },
     );
 
@@ -766,7 +774,187 @@ describe('workspace:open', () => {
 
     expect(result).toEqual({
       success: false,
-      error: { code: IpcErrorCode.INTERNAL_ERROR, message: 'code command not found' },
+      error: { code: IpcErrorCode.IDE_NOT_FOUND, message: 'VS Code is not installed' },
+    });
+  });
+});
+
+// ============================================================
+// settings:get
+// ============================================================
+
+describe('settings:get', () => {
+  it('正常系: ストアから設定が取得される', async () => {
+    vi.mocked(deps.store.getSettings).mockResolvedValue({ selectedIde: 'vscode' });
+
+    const result = await invoke('settings:get');
+
+    expect(result).toEqual({ success: true, data: { selectedIde: 'vscode' } });
+  });
+
+  it('ストアがエラーをスローした場合に INTERNAL_ERROR が返る', async () => {
+    vi.mocked(deps.store.getSettings).mockRejectedValue(new Error('read failed'));
+
+    const result = await invoke('settings:get');
+
+    expect(result).toEqual({
+      success: false,
+      error: { code: IpcErrorCode.INTERNAL_ERROR, message: 'read failed' },
+    });
+  });
+});
+
+// ============================================================
+// settings:update
+// ============================================================
+
+describe('settings:update', () => {
+  it('正常系: 設定が更新され、更新後の値が返る', async () => {
+    vi.mocked(deps.store.updateSettings).mockResolvedValue({ selectedIde: 'webstorm' });
+
+    const result = await invoke('settings:update', { settings: { selectedIde: 'webstorm' } });
+
+    expect(deps.store.updateSettings).toHaveBeenCalledWith({ selectedIde: 'webstorm' });
+    expect(result).toEqual({ success: true, data: { selectedIde: 'webstorm' } });
+  });
+
+  it('不正な設定値の場合に VALIDATION_ERROR が返る', async () => {
+    const result = await invoke('settings:update', { settings: { selectedIde: 'invalid-ide' } });
+
+    expect(result).toEqual({
+      success: false,
+      error: {
+        code: IpcErrorCode.VALIDATION_ERROR,
+        message: 'Invalid option: expected one of "vscode"|"webstorm"|"kiro"',
+      },
+    });
+  });
+});
+
+// ============================================================
+// settings:detect-ides
+// ============================================================
+
+describe('settings:detect-ides', () => {
+  it('検出結果が正常に返る', async () => {
+    const mockResults = [
+      { id: 'vscode' as const, displayName: 'VS Code', installed: true },
+      { id: 'webstorm' as const, displayName: 'WebStorm', installed: false },
+      { id: 'kiro' as const, displayName: 'Kiro IDE', installed: false },
+    ];
+    vi.mocked(deps.ideDetector.detectInstalledIdes).mockResolvedValue(mockResults);
+
+    const result = await invoke('settings:detect-ides');
+
+    expect(result).toEqual({ success: true, data: mockResults });
+  });
+});
+
+// ============================================================
+// workspace:create — IDE 起動削除の確認
+// ============================================================
+
+describe('workspace:create (IDE 起動削除)', () => {
+  it('Workspace 作成成功後に execFile（IDE 起動）が呼ばれない', async () => {
+    const repo = makeRepo();
+    const ws = makeWorkspace();
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.addWorktree).mockResolvedValue('feature/payment-abcd1234');
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    execFileMock.mockClear();
+
+    await invoke('workspace:create', {
+      name: 'feature-payment',
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
+    });
+
+    // execFile が呼ばれていないことを確認（IDE 起動コードが削除されている）
+    expect(execFileMock).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================
+// workspace:open — 設定ベース IDE 起動
+// ============================================================
+
+describe('workspace:open (設定ベース IDE 起動)', () => {
+  it('設定された IDE（webstorm）で Workspace が開かれる', async () => {
+    const ws = makeWorkspace();
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.store.getSettings).mockResolvedValue({ selectedIde: 'webstorm' });
+
+    // which 成功 → IDE 起動成功
+    execFileMock.mockImplementation(
+      (_cmd: string, _args: string[], cb: (err: unknown, result: unknown) => void) => {
+        cb(null, { stdout: '', stderr: '' });
+      },
+    );
+
+    const result = await invoke('workspace:open', { id: 'ws-1' });
+
+    // which webstorm が呼ばれる
+    expect(execFileMock).toHaveBeenCalledWith('which', ['webstorm'], expect.any(Function));
+    // webstorm で起動
+    expect(execFileMock).toHaveBeenCalledWith(
+      'webstorm',
+      ['/home/.squad/workspaces/ws/ws.code-workspace'],
+      expect.any(Function),
+    );
+    expect(result).toEqual({ success: true, data: null });
+  });
+
+  it('設定された IDE がインストールされていない場合に IDE_NOT_FOUND が返る', async () => {
+    const ws = makeWorkspace();
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.store.getSettings).mockResolvedValue({ selectedIde: 'webstorm' });
+
+    // which 失敗
+    execFileMock.mockImplementation(
+      (_cmd: string, _args: string[], cb: (err: unknown, result: unknown) => void) => {
+        cb(new Error('not found'), null);
+      },
+    );
+
+    const result = await invoke('workspace:open', { id: 'ws-1' });
+
+    expect(result).toEqual({
+      success: false,
+      error: {
+        code: IpcErrorCode.IDE_NOT_FOUND,
+        message: 'WebStorm is not installed',
+      },
+    });
+  });
+
+  it('IDE 起動に失敗した場合に IDE_LAUNCH_FAILED が返る', async () => {
+    const ws = makeWorkspace();
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.store.getSettings).mockResolvedValue({ selectedIde: 'kiro' });
+
+    let callCount = 0;
+    execFileMock.mockImplementation(
+      (_cmd: string, _args: string[], cb: (err: unknown, result: unknown) => void) => {
+        callCount++;
+        if (callCount === 1) {
+          // which 成功
+          cb(null, { stdout: '/usr/local/bin/kiro', stderr: '' });
+        } else {
+          // IDE 起動失敗
+          cb(new Error('launch failed'), null);
+        }
+      },
+    );
+
+    const result = await invoke('workspace:open', { id: 'ws-1' });
+
+    expect(result).toEqual({
+      success: false,
+      error: {
+        code: IpcErrorCode.IDE_LAUNCH_FAILED,
+        message: 'Failed to launch Kiro IDE',
+      },
     });
   });
 });
