@@ -48,7 +48,7 @@ export type Workspace = z.infer<typeof workspaceSchema>;
 
 /** `~/.squad/config/repos.json` のスキーマ */
 export const reposConfigSchema = z.object({
-  /** スキーマバージョン。現在は `1` 固定 */
+  /** スキーマバージョン（マイグレーションにより変動） */
   version: z.number(),
   /** 登録済みリポジトリの配列 */
   repositories: z.array(repositorySchema),
@@ -58,7 +58,7 @@ export type ReposConfig = z.infer<typeof reposConfigSchema>;
 
 /** `~/.squad/config/workspaces.json` のスキーマ */
 export const workspacesConfigSchema = z.object({
-  /** スキーマバージョン。現在は `1` 固定 */
+  /** スキーマバージョン（マイグレーションにより変動） */
   version: z.number(),
   /** 作成済み Workspace の配列 */
   workspaces: z.array(workspaceSchema),

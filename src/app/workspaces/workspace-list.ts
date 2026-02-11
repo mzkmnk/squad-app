@@ -80,7 +80,8 @@ export class WorkspaceListComponent {
 
   protected getRepoName(repositoryId: string): string {
     return (
-      this.repoMap().get(repositoryId)?.name ?? this.transloco.translate('workspaces.unknownRepo')
+      this.repoMap().get(repositoryId)?.displayName ??
+      this.transloco.translate('workspaces.unknownRepo')
     );
   }
 
