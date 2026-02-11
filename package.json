@@ -1,6 +1,6 @@
 {
   "name": "squad-app",
-  "version": "0.0.4",
+  "version": "0.0.41",
   "description": "Multi-repo workspace manager for development teams",
   "author": "m4i",
   "packageManager": "pnpm@9.15.4",
