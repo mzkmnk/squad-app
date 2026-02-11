@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "Prepare Release",
+  "description": "package.jsonのバージョン確認、gitログからセマンティックバージョニングで次バージョンを決定し、バージョン更新とリリースPRを作成する",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "リリース準備を実行してください。以下の手順に従ってください：\n\n## 1. 現在のバージョン確認\n- `package.json` の `version` フィールドを読み取る\n\n## 2. 前回リリースからの変更履歴を分析\n- `git --no-pager log v{現在のバージョン}..HEAD --oneline` で前回タグからのコミット一覧を取得\n  - タグが存在しない場合は直近30件のコミットを使用\n- コミットメッセージを分析し、Semantic Versioning に基づいて次バージョンを決定：\n  - `BREAKING CHANGE` や `!:` を含む → メジャーバージョンアップ\n  - `feat` で始まる → マイナーバージョンアップ\n  - `fix`, `perf`, `refactor` 等 → パッチバージョンアップ\n- 決定した次バージョンとその理由を表示する\n\n## 3. バージョン更新\n- `package.json` の `version` を新バージョンに更新\n\n## 4. リリースPR作成\n- `release/v{新バージョン}` ブランチを作成\n- 変更をコミット（メッセージ: `chore(release): v{新バージョン}`）\n- GitHub にプッシュ\n- `gh` コマンドでPRを作成（タイトル: `chore(package): bump version to v{新バージョン}`、本文にはchangelogを含める）\n  - PRの本文は一時ファイル `/tmp/pr_body.md` に書き出し、`--body-file` オプションで渡す\n  - ベースブランチは `main`\n\n## 重要な注意事項\n- git コマンドには必ず `--no-pager` を付与すること\n- PRの本文が長くなる場合は `--body-file` を使用すること\n"
+  },
+  "workspaceFolderName": "squad-app",
+  "shortName": "prepare-release"
+}
