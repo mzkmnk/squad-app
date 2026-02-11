@@ -1,59 +1,177 @@
-# SquadApp
+<p align="center">
+  <img src="build/icon.png" alt="Squad" width="128" height="128" />
+</p>
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.1.4.
+<h1 align="center">Squad</h1>
 
-## Development server
+<p align="center">
+  A desktop app for managing development environments (Workspaces) across multiple Git repositories
+</p>
 
-To start a local development server, run:
+<p align="center">
+  <img src="https://img.shields.io/badge/Angular-21-dd0031?logo=angular" alt="Angular 21" />
+  <img src="https://img.shields.io/badge/Electron-40-47848f?logo=electron" alt="Electron 40" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript" alt="TypeScript 5.9" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06b6d4?logo=tailwindcss" alt="Tailwind CSS 4" />
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
+</p>
+
+<p align="center">
+  <a href="docs/README.ja.md">日本語</a>
+</p>
+
+---
+
+## What is Squad?
+
+When working on features that span multiple repositories, you typically have to create branches, set up worktrees, and write `.code-workspace` files for each repo manually. Squad automates all of that.
+
+1. Register repositories (cloned as Bare Repositories under `~/.squad/repos/`)
+2. Create a Workspace by selecting repositories × branches
+3. Squad auto-generates git worktrees + `.code-workspace` and launches VS Code with one click
+
+![Workspace List](docs/screenshots/workspace-list.png)
+
+![Create Workspace](docs/screenshots/workspace-create.png)
+
+![Repository List](docs/screenshots/repo-list.png)
+
+## Features
+
+| Feature               | Description                                                        |
+| --------------------- | ------------------------------------------------------------------ |
+| Repository Management | Register and remove repositories via HTTPS / SSH URLs              |
+| Branch Listing        | Fetch and browse remote branches                                   |
+| New Branch Creation   | Create new branches from existing ones and add them to a Workspace |
+| Workspace Creation    | Compose a dev environment from multiple repositories × branches    |
+| VS Code Integration   | Auto-generate `.code-workspace` and open VS Code with one click    |
+| Workspace Cleanup     | Remove worktrees, files, and store entries in one operation        |
+
+## Tech Stack
+
+| Layer           | Technology                                         |
+| --------------- | -------------------------------------------------- |
+| Frontend        | Angular 21 (standalone, zoneless, signals)         |
+| UI Components   | spartan-ng/brain + spartan-ng/helm                 |
+| Styling         | Tailwind CSS 4 + class-variance-authority          |
+| Desktop         | Electron 40 (contextIsolation + contextBridge IPC) |
+| Validation      | zod 4                                              |
+| Testing         | Vitest 4 (happy-dom)                               |
+| Linting         | ESLint 9 + Prettier 3                              |
+| Package Manager | pnpm 9                                             |
+
+## Installation
+
+Download the latest `.dmg` from [GitHub Releases](https://github.com/mzkmnk/squad-app/releases).
+
+> Releases are automatically published via GitHub Actions when `main` is updated.
+
+## Development
+
+### Prerequisites
+
+- Node.js 22+
+- pnpm 9+
+- Git
+- VS Code (required to open Workspaces)
+
+### Installation
 
 ```bash
-ng serve
+git clone https://github.com/mzkmnk/squad-app.git
+cd squad-app
+pnpm install
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### Development
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Use two terminals:
 
 ```bash
-ng generate component component-name
+# Terminal 1: Angular dev server
+pnpm ng serve
+
+# Terminal 2: Launch Electron
+pnpm electron:serve
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Build & Package
 
 ```bash
-ng generate --help
+# Angular production build
+pnpm build
+
+# Electron TypeScript compile
+pnpm electron:build
+
+# Full package (dmg / zip)
+pnpm package
 ```
 
-## Building
-
-To build the project run:
+## Testing
 
 ```bash
-ng build
+# Run all tests
+pnpm test
+
+# Angular tests only
+pnpm test:ng
+
+# Electron tests only
+pnpm test:electron
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## Linting & Formatting
 
 ```bash
-ng test
+pnpm lint          # ESLint
+pnpm lint:fix      # ESLint auto-fix
+pnpm format        # Prettier format
+pnpm format:check  # Prettier check (for CI)
 ```
 
-## Running end-to-end tests
+## Project Structure
 
-For end-to-end (e2e) testing, run:
+```
+src/                          # Angular application
+  app/
+    workspaces/               # Workspace list & creation
+    repos/                    # Repository list & registration
+    shared/                   # Shared components (branch selector, etc.)
+    services/                 # Angular services (IPC wrappers)
 
-```bash
-ng e2e
+electron/                     # Electron main process
+  git/                        # Git operations (clone, worktree, fetch, branch)
+  ipc/                        # IPC handlers & channel definitions
+  store/                      # JSON file-based data persistence
+  types/                      # Shared type definitions (IpcResult, models, error codes)
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Architecture
 
-## Additional Resources
+```
+Angular (Renderer)
+  ↓ window.electronAPI.*()
+Preload (contextBridge)
+  ↓ ipcRenderer.invoke()
+IPC Handlers (Main Process)
+  ↓
+Git Service / Store
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- All IPC responses are wrapped in `IpcResult<T>` (a discriminated union of success / error)
+- Errors are classified by `IpcErrorCode` (`VALIDATION_ERROR`, `NOT_FOUND`, `GIT_OPERATION_FAILED`, etc.)
+- Data models are defined with zod schemas, unifying types and validation
+
+## Data Storage
+
+| Type              | Path                              |
+| ----------------- | --------------------------------- |
+| Repository config | `~/.squad/config/repos.json`      |
+| Workspace config  | `~/.squad/config/workspaces.json` |
+| Bare Repositories | `~/.squad/repos/`                 |
+| Worktrees         | `~/.squad/workspaces/`            |
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
