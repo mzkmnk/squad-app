@@ -3,7 +3,8 @@
     "navigation": "ナビゲーション",
     "workspaces": "ワークスペース",
     "repositories": "リポジトリ",
-    "toggleSidebar": "サイドバーを切り替え"
+    "toggleSidebar": "サイドバーを切り替え",
+    "settings": "設定"
   },
   "common": {
     "create": "作成",
@@ -91,5 +92,15 @@
     "GIT_OPERATION_FAILED": "Git 操作に失敗しました: {{ message }}",
     "NOT_FOUND": "指定されたリソースが見つかりません。",
     "INTERNAL_ERROR": "予期しないエラーが発生しました。"
+  },
+  "settings": {
+    "title": "設定",
+    "saveSuccess": "設定を保存しました",
+    "ide": {
+      "sectionTitle": "IDE",
+      "description": "Workspace を開くときに使用する IDE を選択してください。",
+      "detecting": "IDE を検出中...",
+      "notInstalled": "（未インストール）"
+    }
   }
 }

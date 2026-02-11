@@ -35,6 +35,18 @@
                   <span>{{ t('nav.repositories') }}</span>
                 </a>
               </li>
+              <li hlmSidebarMenuItem>
+                <a
+                  hlmSidebarMenuButton
+                  routerLink="/settings"
+                  routerLinkActive
+                  #rlaSettings="routerLinkActive"
+                  [isActive]="rlaSettings.isActive"
+                >
+                  <ng-icon hlm name="lucideSettings" size="sm" />
+                  <span>{{ t('nav.settings') }}</span>
+                </a>
+              </li>
             </ul>
           </div>
         </div>

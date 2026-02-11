@@ -1,0 +1,42 @@
+<ng-container *transloco="let t">
+  <div class="mx-auto max-w-6xl p-6">
+    <h1 class="mb-6 text-2xl font-bold">{{ t('settings.title') }}</h1>
+
+    <!-- IDE セクション -->
+    <section class="space-y-4">
+      <h2 class="text-lg font-semibold">{{ t('settings.ide.sectionTitle') }}</h2>
+      <p class="text-muted-foreground text-sm">{{ t('settings.ide.description') }}</p>
+
+      @if (detectingIdes()) {
+        <div class="flex items-center gap-2">
+          <hlm-spinner />
+          <span class="text-muted-foreground text-sm">
+            {{ t('settings.ide.detecting') }}
+          </span>
+        </div>
+      } @else {
+        <brn-select
+          [value]="selectedIdeId()"
+          (valueChange)="onIdeChange($event)"
+          [disabled]="saving()"
+        >
+          <hlm-select-trigger class="w-[240px]">
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content>
+            @for (ide of ideOptions(); track ide.id) {
+              <hlm-option [value]="ide.id" [disabled]="!ide.installed">
+                <span>{{ ide.displayName }}</span>
+                @if (!ide.installed) {
+                  <span class="text-muted-foreground ml-2 text-xs">
+                    {{ t('settings.ide.notInstalled') }}
+                  </span>
+                }
+              </hlm-option>
+            }
+          </hlm-select-content>
+        </brn-select>
+      }
+    </section>
+  </div>
+</ng-container>

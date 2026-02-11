@@ -3,7 +3,8 @@
     "navigation": "Navigation",
     "workspaces": "Workspaces",
     "repositories": "Repositories",
-    "toggleSidebar": "Toggle sidebar"
+    "toggleSidebar": "Toggle sidebar",
+    "settings": "Settings"
   },
   "common": {
     "create": "Create",
@@ -91,5 +92,15 @@
     "GIT_OPERATION_FAILED": "Git operation failed: {{ message }}",
     "NOT_FOUND": "The specified resource was not found.",
     "INTERNAL_ERROR": "An unexpected error occurred."
+  },
+  "settings": {
+    "title": "Settings",
+    "saveSuccess": "Settings saved",
+    "ide": {
+      "sectionTitle": "IDE",
+      "description": "Select the IDE to use when opening a Workspace.",
+      "detecting": "Detecting IDEs...",
+      "notInstalled": "(Not installed)"
+    }
   }
 }

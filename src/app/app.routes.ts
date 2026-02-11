@@ -11,6 +11,10 @@ export const routes: Routes = [
     loadComponent: () => import('./repos/repo-list').then((m) => m.RepoListComponent),
   },
   {
+    path: 'settings',
+    loadComponent: () => import('./settings/settings').then((m) => m.SettingsComponent),
+  },
+  {
     path: '',
     redirectTo: 'workspaces',
     pathMatch: 'full',
