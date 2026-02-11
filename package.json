@@ -1,6 +1,6 @@
 {
   "name": "squad-app",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Multi-repo workspace manager for development teams",
   "author": "m4i",
   "packageManager": "pnpm@9.15.4",
@@ -60,6 +60,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "concurrently": "^9.2.1",
+    "fix-path": "^5.0.0",
     "ngx-sonner": ">=3.0.0",
     "postcss": "^8.5.6",
     "rxjs": "~7.8.0",

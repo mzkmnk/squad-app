@@ -1,12 +1,17 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import fixPath from 'fix-path';
 import { SquadStore } from './store/squad-store.js';
 import { createSquadPaths } from './store/squad-paths.js';
 import { GitService } from './git/git-service.js';
 import { CodeWorkspaceService } from './git/code-workspace-service.js';
 import { registerIpcHandlers } from './ipc/ipc-handlers.js';
 import { detectInstalledIdes } from './ide/ide-detector.js';
+
+// macOS/Linux の GUI アプリではシェルの $PATH が継承されないため、
+// ログインシェルから完全な PATH を取得して process.env.PATH を修正する
+fixPath();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
