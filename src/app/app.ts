@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideGitFork, lucideLayers, lucidePanelLeft } from '@ng-icons/lucide';
+import { lucideGitFork, lucideLayers, lucidePanelLeft, lucideSettings } from '@ng-icons/lucide';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
 import {
   HlmSidebar,
@@ -46,6 +46,6 @@ import { HlmToasterImports } from '@spartan-ng/helm/sonner';
     ...HlmIconImports,
     ...HlmToasterImports,
   ],
-  providers: [provideIcons({ lucideLayers, lucideGitFork, lucidePanelLeft })],
+  providers: [provideIcons({ lucideLayers, lucideGitFork, lucidePanelLeft, lucideSettings })],
 })
 export class App {}
