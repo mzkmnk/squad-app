@@ -56,7 +56,8 @@
     "createDescription": "Enter a workspace name and select the repositories and branches to include.",
     "nameLabel": "Workspace Name",
     "namePlaceholder": "feature-payment",
-    "reposAndBranches": "Repositories and Branches",
+    "reposAndBranches": "Repositories and Base Branches",
+    "branchHint": "A working branch will be created from the latest remote of the selected branch",
     "noReposRegistered": "No repositories registered. Please register a repository first.",
     "fetchingBranches": "Fetching branches...",
     "createNewBranch": "Create new branch",
@@ -69,7 +70,7 @@
     }
   },
   "branches": {
-    "searchPlaceholder": "Search branches...",
+    "searchPlaceholder": "Search base branch...",
     "noMatch": "No matching branches",
     "createTitle": "Create New Branch",
     "createDescription": "Select a base branch and enter a new branch name.",

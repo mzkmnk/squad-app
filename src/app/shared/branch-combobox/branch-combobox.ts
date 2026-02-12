@@ -16,7 +16,7 @@ export class BranchComboboxComponent {
   readonly value = input<string | null>(null);
 
   /** プレースホルダーテキスト */
-  readonly placeholder = input<string>('ブランチを検索...');
+  readonly placeholder = input.required<string>();
 
   /** 無効状態 */
   readonly disabled = input<boolean>(false);

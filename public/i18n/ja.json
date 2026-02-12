@@ -56,7 +56,8 @@
     "createDescription": "Workspace 名を入力し、含めるリポジトリとブランチを選択してください。",
     "nameLabel": "Workspace 名",
     "namePlaceholder": "feature-payment",
-    "reposAndBranches": "リポジトリとブランチ",
+    "reposAndBranches": "リポジトリと起点ブランチ",
+    "branchHint": "選択したブランチのリモート最新から作業用ブランチが作成されます",
     "noReposRegistered": "リポジトリが登録されていません。先にリポジトリを登録してください。",
     "fetchingBranches": "ブランチを取得中...",
     "createNewBranch": "新規ブランチを作成",
@@ -69,7 +70,7 @@
     }
   },
   "branches": {
-    "searchPlaceholder": "ブランチを検索...",
+    "searchPlaceholder": "起点ブランチを検索...",
     "noMatch": "一致するブランチがありません",
     "createTitle": "新規ブランチを作成",
     "createDescription": "起点ブランチを選択し、新しいブランチ名を入力してください。",

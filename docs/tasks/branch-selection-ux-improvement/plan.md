@@ -24,23 +24,23 @@ UIの表現と実際の動作にギャップがあり、ユーザーが「既存
 
 ### 1. i18n キーの追加・変更（`public/i18n/ja.json`）
 
-- [ ] `workspaces.reposAndBranches` のラベルを「リポジトリと起点ブランチ」に変更
-- [ ] `workspaces.branchHint` を追加: 「選択したブランチのリモート最新から作業用ブランチが作成されます」
-- [ ] `branches.searchPlaceholder` を「起点ブランチを検索...」に変更
+- [x] `workspaces.reposAndBranches` のラベルを「リポジトリと起点ブランチ」に変更
+- [x] `workspaces.branchHint` を追加: 「選択したブランチのリモート最新から作業用ブランチが作成されます」
+- [x] `branches.searchPlaceholder` を「起点ブランチを検索...」に変更
 
 ### 2. Workspace 作成フォームのテンプレート修正（`src/app/workspaces/workspace-create-form.html`）
 
-- [ ] セクション見出し `reposAndBranches` の下にヘルプテキスト（`branchHint`）を表示する `<p>` を追加
-- [ ] スタイル: `text-muted-foreground text-xs` で控えめに表示
+- [x] セクション見出し `reposAndBranches` の下にヘルプテキスト（`branchHint`）を表示する `<p>` を追加
+- [x] スタイル: `text-muted-foreground text-xs` で控えめに表示
 
 ### 3. ブランチコンボボックスの placeholder 更新（`src/app/shared/branch-combobox/branch-combobox.ts`）
 
-- [ ] デフォルト placeholder を i18n キー `branches.searchPlaceholder` の値に合わせる（呼び出し元から渡す）
+- [x] デフォルト placeholder を i18n キー `branches.searchPlaceholder` の値に合わせる（呼び出し元から渡す）
 
 ### 4. 動作確認
 
-- [ ] Workspace 作成ダイアログを開き、ラベルとヘルプテキストが正しく表示されることを確認
-- [ ] 新規ブランチ作成ダイアログ側のラベルとの整合性を確認（こちらは元々「起点ブランチ」表記なので問題なし）
+- [x] Workspace 作成ダイアログを開き、ラベルとヘルプテキストが正しく表示されることを確認
+- [x] 新規ブランチ作成ダイアログ側のラベルとの整合性を確認（こちらは元々「起点ブランチ」表記なので問題なし）
 
 ## 対象ファイル
 
