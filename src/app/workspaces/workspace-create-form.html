@@ -28,7 +28,8 @@
 
     <!-- リポジトリ選択 + ブランチ指定 -->
     <div>
-      <h4 class="mb-2 text-sm font-semibold">{{ t('workspaces.reposAndBranches') }}</h4>
+      <h4 class="mb-1 text-sm font-semibold">{{ t('workspaces.reposAndBranches') }}</h4>
+      <p class="text-muted-foreground mb-2 text-xs">{{ t('workspaces.branchHint') }}</p>
 
       @if (loadingRepos()) {
         <div class="flex items-center justify-center gap-2 py-4">
@@ -73,6 +74,7 @@
                             <app-branch-combobox
                               [branches]="branchesMap().get(repo.id) ?? []"
                               [value]="getSelectedBranchName(repo.id)"
+                              [placeholder]="t('branches.searchPlaceholder')"
                               [disabled]="creating()"
                               (valueChange)="selectBranch(repo.id, $event)"
                             />
