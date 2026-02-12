@@ -34,7 +34,7 @@
               size="sm"
               role="listitem"
               tabindex="0"
-              class="hover:bg-accent/50 relative flex cursor-pointer flex-col justify-between transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+              class="hover:bg-accent/50 relative flex h-[148px] cursor-pointer flex-col transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               [class.pointer-events-none]="openingIds().has(ws.id) || deletingIds().has(ws.id)"
               (click)="openWorkspace(ws.id)"
               (keyup.enter)="openWorkspace(ws.id)"
@@ -92,7 +92,10 @@
                 <h3 hlmCardTitle class="truncate pr-8 text-base">{{ ws.displayName }}</h3>
               </div>
 
-              <div hlmCardContent class="flex flex-wrap gap-1.5">
+              <div
+                hlmCardContent
+                class="scrollbar-none flex min-h-0 flex-1 flex-wrap content-start gap-1.5 overflow-y-auto"
+              >
                 @for (entry of ws.entries; track entry.repositoryId) {
                   <span
                     class="bg-muted inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs"
@@ -104,7 +107,7 @@
                 }
               </div>
 
-              <div hlmCardFooter>
+              <div hlmCardFooter class="mt-auto">
                 <span class="text-muted-foreground ml-auto text-[10px]">
                   {{ t('workspaces.createdAt', { date: (ws.createdAt | date: 'yyyy/MM/dd') }) }}
                   @if (ws.updatedAt !== ws.createdAt) {
