@@ -162,6 +162,7 @@ describe('GitService - removeBareRepository', () => {
 describe('GitService - addWorktree', () => {
   it('指定ブランチの Worktree を作成できる', async () => {
     await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
     await service.addWorktree('test-repo', 'my-workspace', 'main');
     const worktreeDir = paths.worktreeDir('my-workspace', 'test-repo');
     const stat = await fs.stat(worktreeDir);
@@ -170,6 +171,7 @@ describe('GitService - addWorktree', () => {
 
   it('Worktree ディレクトリ内にファイルが展開される', async () => {
     await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
     await service.addWorktree('test-repo', 'my-workspace', 'main');
     const worktreeDir = paths.worktreeDir('my-workspace', 'test-repo');
     const readme = path.join(worktreeDir, 'README.md');
@@ -179,6 +181,7 @@ describe('GitService - addWorktree', () => {
 
   it('Workspace ディレクトリが自動作成される', async () => {
     await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
     await service.addWorktree('test-repo', 'new-workspace', 'main');
     const wsDir = paths.workspaceDir('new-workspace');
     const stat = await fs.stat(wsDir);
@@ -194,6 +197,7 @@ describe('GitService - addWorktree', () => {
 
   it('存在しないブランチの場合に GitOperationError がスローされる', async () => {
     await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
     await expect(
       service.addWorktree('test-repo', 'my-workspace', 'nonexistent-branch'),
     ).rejects.toThrow(GitOperationError);
@@ -201,12 +205,15 @@ describe('GitService - addWorktree', () => {
 
   it('3回リトライ後に全て重複した場合 GitOperationError がスローされる', async () => {
     await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
 
     const spy = vi.spyOn(uuidSuffix, 'generateSuffix').mockReturnValue('bbbbbbbb');
 
     // 先に同名ブランチで worktree を作成しておく
     const repoDir = paths.repoDir('test-repo');
-    await execFileAsync('git', ['branch', 'main-bbbbbbbb', 'main'], { cwd: repoDir });
+    await execFileAsync('git', ['branch', 'main-bbbbbbbb', 'refs/remotes/origin/main'], {
+      cwd: repoDir,
+    });
     await execFileAsync(
       'git',
       ['worktree', 'add', paths.worktreeDir('pre-existing', 'test-repo'), 'main-bbbbbbbb'],
@@ -226,6 +233,7 @@ describe('GitService - addWorktree', () => {
 describe('GitService - removeWorktree', () => {
   it('既存の Worktree を削除できる', async () => {
     await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
     await service.addWorktree('test-repo', 'my-workspace', 'main');
     await service.removeWorktree('test-repo', 'my-workspace');
     const worktreeDir = paths.worktreeDir('my-workspace', 'test-repo');
@@ -238,6 +246,7 @@ describe('GitService - removeWorktree', () => {
 
   it('削除後に Worktree ディレクトリが存在しない', async () => {
     await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
     await service.addWorktree('test-repo', 'my-workspace', 'main');
     await service.removeWorktree('test-repo', 'my-workspace');
     await expect(fs.stat(paths.worktreeDir('my-workspace', 'test-repo'))).rejects.toThrow();

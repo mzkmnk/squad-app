@@ -56,16 +56,20 @@ export class GitService {
   /**
    * 起点ブランチから新規ブランチを作成する。
    *
+   * リモート追跡ブランチ（refs/remotes/origin/*）を起点として使用する。
+   * Bare Repository では git fetch で refs/remotes/origin/* のみが更新され、
+   * refs/heads/* は clone 時点のまま更新されないため、常にリモート参照を使う。
+   *
    * @param repoName - Bare Repository 名（suffix 付き）
    * @param newBranch - 作成するブランチ名
-   * @param sourceBranch - 起点ブランチ名（例: develop）
+   * @param sourceBranch - 起点ブランチ名（例: develop）。origin/ プレフィックスなしで指定する。
    */
   async createBranch(repoName: string, newBranch: string, sourceBranch: string): Promise<void> {
     validateBranchName(newBranch);
     validateBranchName(sourceBranch);
 
     const repoDir = this.paths.repoDir(repoName);
-    await this.execGit(['branch', newBranch, sourceBranch], repoDir);
+    await this.execGit(['branch', newBranch, `refs/remotes/origin/${sourceBranch}`], repoDir);
   }
 
   /** 指定ブランチの Worktree を作成する。suffix 付きブランチ名を返す */
