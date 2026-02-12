@@ -13,6 +13,8 @@ import type {
   WorkspaceCreateRequest,
   WorkspaceDeleteRequest,
   WorkspaceOpenRequest,
+  WorkspaceAddEntryRequest,
+  WorkspaceRemoveEntryRequest,
   SettingsUpdateRequest,
 } from './ipc-channels.js';
 import type { IpcResult } from '../types/ipc-result.js';
@@ -410,6 +412,169 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
         }
 
         return successResult(null);
+      } catch (error) {
+        return mapErrorToIpcResult(error);
+      }
+    },
+  );
+
+  // --- Workspace エントリ操作 ---
+
+  ipcMain.handle(
+    IpcChannels.WORKSPACE_ADD_ENTRY,
+    async (_event, { id, entries }: WorkspaceAddEntryRequest): Promise<IpcResult<Workspace>> => {
+      // 1. Workspace 存在確認
+      const ws = await store.getWorkspace(id);
+      if (!ws) {
+        return notFoundResult('Workspace', id);
+      }
+
+      // 2. 各エントリの Repository 存在確認
+      const resolvedEntries: ResolvedWorkspaceEntry[] = [];
+      for (const entry of entries) {
+        const repo = await store.getRepository(entry.repositoryId);
+        if (!repo) {
+          return notFoundResult('Repository', entry.repositoryId);
+        }
+        resolvedEntries.push({ repo, branch: entry.branch, sourceBranch: entry.sourceBranch });
+      }
+
+      // 3. 重複チェック
+      const existingRepoIds = new Set(ws.entries.map((e) => e.repositoryId));
+      for (const entry of entries) {
+        if (existingRepoIds.has(entry.repositoryId)) {
+          return {
+            success: false,
+            error: {
+              code: IpcErrorCode.DUPLICATE_ENTRY,
+              message: `Entry for repository already exists: ${entry.repositoryId}`,
+            },
+          };
+        }
+      }
+
+      const createdWorktrees: CreatedWorktree[] = [];
+      const originalEntries = [...ws.entries];
+
+      try {
+        // 4. 各エントリに対して fetch → Worktree 作成
+        for (const resolved of resolvedEntries) {
+          await gitService.fetch(resolved.repo.name);
+          await gitService.addWorktree(
+            resolved.repo.name,
+            ws.name,
+            resolved.branch,
+            resolved.sourceBranch,
+          );
+          createdWorktrees.push({
+            repoName: resolved.repo.name,
+            workspaceName: ws.name,
+          });
+        }
+
+        // 5. ストア更新
+        const newEntries = entries.map((e) => ({
+          repositoryId: e.repositoryId,
+          branch: e.branch,
+        }));
+        const updated = await store.updateWorkspace(id, {
+          entries: [...originalEntries, ...newEntries],
+        });
+
+        if (!updated) {
+          return notFoundResult('Workspace', id);
+        }
+
+        // 6. .code-workspace 再生成
+        try {
+          const allResolvedEntries: { repoName: string }[] = [];
+          for (const entry of updated.entries) {
+            const repo = await store.getRepository(entry.repositoryId);
+            if (repo) {
+              allResolvedEntries.push({ repoName: repo.name });
+            }
+          }
+          await codeWorkspaceService.generate(ws.name, allResolvedEntries);
+        } catch (error) {
+          // .code-workspace 再生成失敗時はストアを元に戻す
+          await store.updateWorkspace(id, { entries: originalEntries });
+          throw error;
+        }
+
+        return successResult(updated);
+      } catch (error) {
+        // ロールバック: 作成済み Worktree を逆順で削除
+        for (const wt of [...createdWorktrees].reverse()) {
+          try {
+            await gitService.removeWorktree(wt.repoName, wt.workspaceName);
+          } catch {
+            // ベストエフォート
+          }
+        }
+        return mapErrorToIpcResult(error);
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IpcChannels.WORKSPACE_REMOVE_ENTRY,
+    async (
+      _event,
+      { id, repositoryIds }: WorkspaceRemoveEntryRequest,
+    ): Promise<IpcResult<Workspace>> => {
+      try {
+        // 1. Workspace 存在確認
+        const ws = await store.getWorkspace(id);
+        if (!ws) {
+          return notFoundResult('Workspace', id);
+        }
+
+        // 2. 削除対象の検証
+        const existingRepoIds = new Set(ws.entries.map((e) => e.repositoryId));
+        for (const repoId of repositoryIds) {
+          if (!existingRepoIds.has(repoId)) {
+            return {
+              success: false,
+              error: {
+                code: IpcErrorCode.VALIDATION_ERROR,
+                message: `Entry for repository not found: ${repoId}`,
+              },
+            };
+          }
+        }
+
+        // 3. 各削除対象エントリの Worktree 削除（ベストエフォート）
+        for (const repoId of repositoryIds) {
+          const repo = await store.getRepository(repoId);
+          if (repo) {
+            try {
+              await gitService.removeWorktree(repo.name, ws.name);
+            } catch {
+              // ベストエフォート
+            }
+          }
+        }
+
+        // 4. ストア更新
+        const removeSet = new Set(repositoryIds);
+        const remaining = ws.entries.filter((e) => !removeSet.has(e.repositoryId));
+        const updated = await store.updateWorkspace(id, { entries: remaining });
+
+        if (!updated) {
+          return notFoundResult('Workspace', id);
+        }
+
+        // 5. .code-workspace 再生成
+        const remainingResolved: { repoName: string }[] = [];
+        for (const entry of remaining) {
+          const repo = await store.getRepository(entry.repositoryId);
+          if (repo) {
+            remainingResolved.push({ repoName: repo.name });
+          }
+        }
+        await codeWorkspaceService.generate(ws.name, remainingResolved);
+
+        return successResult(updated);
       } catch (error) {
         return mapErrorToIpcResult(error);
       }

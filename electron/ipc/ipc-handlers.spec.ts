@@ -83,6 +83,7 @@ function createMockDeps(): IpcHandlerDeps {
       getWorkspace: vi.fn(),
       addWorkspace: vi.fn(),
       removeWorkspace: vi.fn(),
+      updateWorkspace: vi.fn(),
       getSettings: vi.fn(),
       updateSettings: vi.fn(),
     } as unknown as IpcHandlerDeps['store'],
@@ -959,5 +960,376 @@ describe('workspace:open (設定ベース IDE 起動)', () => {
         message: 'Failed to launch Kiro IDE',
       },
     });
+  });
+});
+
+// ============================================================
+// workspace:add-entry
+// ============================================================
+
+describe('workspace:add-entry', () => {
+  it('正常系: 単一エントリ追加 — fetch → addWorktree → updateWorkspace → generate が順に呼ばれる', async () => {
+    const repo = makeRepo({ id: 'repo-2', name: 'frontend' });
+    const existingWs = makeWorkspace({
+      id: 'ws-1',
+      name: 'feature-payment-abcd1234',
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
+    });
+    const updatedWs = makeWorkspace({
+      ...existingWs,
+      entries: [
+        { repositoryId: 'repo-1', branch: 'feature/payment' },
+        { repositoryId: 'repo-2', branch: 'main' },
+      ],
+    });
+
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
+    vi.mocked(deps.gitService.addWorktree).mockResolvedValue('main-11111111');
+    vi.mocked(deps.store.updateWorkspace).mockResolvedValue(updatedWs);
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:add-entry', {
+      id: 'ws-1',
+      entries: [{ repositoryId: 'repo-2', branch: 'main' }],
+    });
+
+    expect(deps.gitService.fetch).toHaveBeenCalledWith('frontend');
+    expect(deps.gitService.addWorktree).toHaveBeenCalledWith(
+      'frontend',
+      'feature-payment-abcd1234',
+      'main',
+      undefined,
+    );
+    expect(deps.store.updateWorkspace).toHaveBeenCalledWith('ws-1', {
+      entries: [
+        { repositoryId: 'repo-1', branch: 'feature/payment' },
+        { repositoryId: 'repo-2', branch: 'main' },
+      ],
+    });
+    expect(deps.codeWorkspaceService.generate).toHaveBeenCalled();
+    expect(result).toEqual({ success: true, data: updatedWs });
+  });
+
+  it('正常系: 複数エントリ一括追加 — 各エントリに対して fetch → addWorktree が順次実行される', async () => {
+    const repo1 = makeRepo({ id: 'repo-2', name: 'frontend' });
+    const repo2 = makeRepo({ id: 'repo-3', name: 'shared' });
+    const existingWs = makeWorkspace({
+      id: 'ws-1',
+      name: 'feature-payment-abcd1234',
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
+    });
+    const updatedWs = makeWorkspace({
+      ...existingWs,
+      entries: [
+        { repositoryId: 'repo-1', branch: 'feature/payment' },
+        { repositoryId: 'repo-2', branch: 'main' },
+        { repositoryId: 'repo-3', branch: 'develop' },
+      ],
+    });
+
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValueOnce(repo1).mockResolvedValueOnce(repo2);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
+    vi.mocked(deps.gitService.addWorktree)
+      .mockResolvedValueOnce('main-11111111')
+      .mockResolvedValueOnce('develop-22222222');
+    vi.mocked(deps.store.updateWorkspace).mockResolvedValue(updatedWs);
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:add-entry', {
+      id: 'ws-1',
+      entries: [
+        { repositoryId: 'repo-2', branch: 'main' },
+        { repositoryId: 'repo-3', branch: 'develop' },
+      ],
+    });
+
+    expect(deps.gitService.fetch).toHaveBeenCalledTimes(2);
+    expect(deps.gitService.addWorktree).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ success: true, data: updatedWs });
+  });
+
+  it('異常系: Workspace が見つからない場合に NOT_FOUND エラーが返る', async () => {
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:add-entry', {
+      id: 'missing',
+      entries: [{ repositoryId: 'repo-1', branch: 'main' }],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: { code: IpcErrorCode.NOT_FOUND, message: 'Workspace not found: missing' },
+    });
+  });
+
+  it('異常系: Repository が見つからない場合に NOT_FOUND エラーが返る', async () => {
+    const existingWs = makeWorkspace();
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:add-entry', {
+      id: 'ws-1',
+      entries: [{ repositoryId: 'missing-repo', branch: 'main' }],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: { code: IpcErrorCode.NOT_FOUND, message: 'Repository not found: missing-repo' },
+    });
+  });
+
+  it('異常系: 同一リポジトリの重複エントリで DUPLICATE_ENTRY エラーが返る', async () => {
+    const existingWs = makeWorkspace({
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
+    });
+    const repo = makeRepo({ id: 'repo-1' });
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+
+    const result = await invoke('workspace:add-entry', {
+      id: 'ws-1',
+      entries: [{ repositoryId: 'repo-1', branch: 'main' }],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: {
+        code: IpcErrorCode.DUPLICATE_ENTRY,
+        message: expect.stringContaining('repo-1') as string,
+      },
+    });
+  });
+
+  it('異常系: Worktree 作成失敗時に作成済み Worktree がロールバック削除される', async () => {
+    const repo1 = makeRepo({ id: 'repo-2', name: 'frontend' });
+    const repo2 = makeRepo({ id: 'repo-3', name: 'shared' });
+    const existingWs = makeWorkspace({
+      id: 'ws-1',
+      name: 'feature-payment-abcd1234',
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
+    });
+
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValueOnce(repo1).mockResolvedValueOnce(repo2);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
+    vi.mocked(deps.gitService.addWorktree)
+      .mockResolvedValueOnce('main-11111111')
+      .mockRejectedValueOnce(new GitOperationError('worktree failed', 1, 'error'));
+    vi.mocked(deps.gitService.removeWorktree).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:add-entry', {
+      id: 'ws-1',
+      entries: [
+        { repositoryId: 'repo-2', branch: 'main' },
+        { repositoryId: 'repo-3', branch: 'develop' },
+      ],
+    });
+
+    // 1つ目の Worktree がロールバック削除される
+    expect(deps.gitService.removeWorktree).toHaveBeenCalledWith(
+      'frontend',
+      'feature-payment-abcd1234',
+    );
+    expect(result).toEqual({
+      success: false,
+      error: { code: IpcErrorCode.GIT_OPERATION_FAILED, message: 'error' },
+    });
+  });
+
+  it('異常系: fetch 失敗で GIT_OPERATION_FAILED エラーが返る（Worktree 未作成のためロールバック不要）', async () => {
+    const repo = makeRepo({ id: 'repo-2', name: 'frontend' });
+    const existingWs = makeWorkspace();
+
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.gitService.fetch).mockRejectedValue(
+      new GitOperationError('fetch failed', 128, 'fatal: could not fetch'),
+    );
+
+    const result = await invoke('workspace:add-entry', {
+      id: 'ws-1',
+      entries: [{ repositoryId: 'repo-2', branch: 'main' }],
+    });
+
+    expect(deps.gitService.addWorktree).not.toHaveBeenCalled();
+    expect(deps.gitService.removeWorktree).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      success: false,
+      error: { code: IpcErrorCode.GIT_OPERATION_FAILED, message: 'fatal: could not fetch' },
+    });
+  });
+});
+
+// ============================================================
+// workspace:remove-entry
+// ============================================================
+
+describe('workspace:remove-entry', () => {
+  it('正常系: 単一エントリ削除 — removeWorktree → updateWorkspace → generate が呼ばれる', async () => {
+    const repo = makeRepo({ id: 'repo-1', name: 'backend' });
+    const existingWs = makeWorkspace({
+      id: 'ws-1',
+      name: 'feature-payment-abcd1234',
+      entries: [
+        { repositoryId: 'repo-1', branch: 'feature/payment' },
+        { repositoryId: 'repo-2', branch: 'main' },
+      ],
+    });
+    const updatedWs = makeWorkspace({
+      ...existingWs,
+      entries: [{ repositoryId: 'repo-2', branch: 'main' }],
+    });
+
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.gitService.removeWorktree).mockResolvedValue(undefined);
+    vi.mocked(deps.store.updateWorkspace).mockResolvedValue(updatedWs);
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:remove-entry', {
+      id: 'ws-1',
+      repositoryIds: ['repo-1'],
+    });
+
+    expect(deps.gitService.removeWorktree).toHaveBeenCalledWith(
+      'backend',
+      'feature-payment-abcd1234',
+    );
+    expect(deps.store.updateWorkspace).toHaveBeenCalledWith('ws-1', {
+      entries: [{ repositoryId: 'repo-2', branch: 'main' }],
+    });
+    expect(deps.codeWorkspaceService.generate).toHaveBeenCalled();
+    expect(result).toEqual({ success: true, data: updatedWs });
+  });
+
+  it('正常系: 複数エントリ一括削除 — 各エントリの Worktree が削除される', async () => {
+    const repo1 = makeRepo({ id: 'repo-1', name: 'backend' });
+    const repo2 = makeRepo({ id: 'repo-2', name: 'frontend' });
+    const existingWs = makeWorkspace({
+      id: 'ws-1',
+      name: 'feature-payment-abcd1234',
+      entries: [
+        { repositoryId: 'repo-1', branch: 'feature/payment' },
+        { repositoryId: 'repo-2', branch: 'main' },
+        { repositoryId: 'repo-3', branch: 'develop' },
+      ],
+    });
+    const updatedWs = makeWorkspace({
+      ...existingWs,
+      entries: [{ repositoryId: 'repo-3', branch: 'develop' }],
+    });
+
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValueOnce(repo1).mockResolvedValueOnce(repo2);
+    vi.mocked(deps.gitService.removeWorktree).mockResolvedValue(undefined);
+    vi.mocked(deps.store.updateWorkspace).mockResolvedValue(updatedWs);
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:remove-entry', {
+      id: 'ws-1',
+      repositoryIds: ['repo-1', 'repo-2'],
+    });
+
+    expect(deps.gitService.removeWorktree).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ success: true, data: updatedWs });
+  });
+
+  it('異常系: Workspace が見つからない場合に NOT_FOUND エラーが返る', async () => {
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:remove-entry', {
+      id: 'missing',
+      repositoryIds: ['repo-1'],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: { code: IpcErrorCode.NOT_FOUND, message: 'Workspace not found: missing' },
+    });
+  });
+
+  it('異常系: 指定 repositoryId がエントリに存在しない場合に VALIDATION_ERROR エラーが返る', async () => {
+    const existingWs = makeWorkspace({
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
+    });
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+
+    const result = await invoke('workspace:remove-entry', {
+      id: 'ws-1',
+      repositoryIds: ['repo-999'],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: {
+        code: IpcErrorCode.VALIDATION_ERROR,
+        message: expect.stringContaining('repo-999') as string,
+      },
+    });
+  });
+
+  it('正常系: Worktree 削除失敗でもストア更新は続行される（ベストエフォート）', async () => {
+    const repo = makeRepo({ id: 'repo-1', name: 'backend' });
+    const existingWs = makeWorkspace({
+      id: 'ws-1',
+      name: 'feature-payment-abcd1234',
+      entries: [
+        { repositoryId: 'repo-1', branch: 'feature/payment' },
+        { repositoryId: 'repo-2', branch: 'main' },
+      ],
+    });
+    const updatedWs = makeWorkspace({
+      ...existingWs,
+      entries: [{ repositoryId: 'repo-2', branch: 'main' }],
+    });
+
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.gitService.removeWorktree).mockRejectedValue(
+      new Error('worktree removal failed'),
+    );
+    vi.mocked(deps.store.updateWorkspace).mockResolvedValue(updatedWs);
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:remove-entry', {
+      id: 'ws-1',
+      repositoryIds: ['repo-1'],
+    });
+
+    expect(deps.store.updateWorkspace).toHaveBeenCalled();
+    expect(deps.codeWorkspaceService.generate).toHaveBeenCalled();
+    expect(result).toEqual({ success: true, data: updatedWs });
+  });
+
+  it('正常系: Repository が見つからなくても Worktree 削除をスキップしてストア更新が実行される', async () => {
+    const existingWs = makeWorkspace({
+      id: 'ws-1',
+      name: 'feature-payment-abcd1234',
+      entries: [
+        { repositoryId: 'repo-1', branch: 'feature/payment' },
+        { repositoryId: 'repo-2', branch: 'main' },
+      ],
+    });
+    const updatedWs = makeWorkspace({
+      ...existingWs,
+      entries: [{ repositoryId: 'repo-2', branch: 'main' }],
+    });
+
+    vi.mocked(deps.store.getWorkspace).mockResolvedValue(existingWs);
+    vi.mocked(deps.store.getRepository).mockResolvedValue(undefined);
+    vi.mocked(deps.store.updateWorkspace).mockResolvedValue(updatedWs);
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:remove-entry', {
+      id: 'ws-1',
+      repositoryIds: ['repo-1'],
+    });
+
+    expect(deps.gitService.removeWorktree).not.toHaveBeenCalled();
+    expect(deps.store.updateWorkspace).toHaveBeenCalled();
+    expect(result).toEqual({ success: true, data: updatedWs });
   });
 });

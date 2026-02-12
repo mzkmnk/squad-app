@@ -75,6 +75,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   /** 指定された ID の Workspace を VS Code で開く。 */
   openWorkspace: (id: string) => ipcRenderer.invoke(IpcChannels.WORKSPACE_OPEN, { id }),
 
+  /** Workspace にエントリを一括追加する。 */
+  addWorkspaceEntry: (
+    id: string,
+    entries: { repositoryId: string; branch: string; sourceBranch?: string }[],
+  ) => ipcRenderer.invoke(IpcChannels.WORKSPACE_ADD_ENTRY, { id, entries }),
+
+  /** Workspace からエントリを一括削除する。 */
+  removeWorkspaceEntry: (id: string, repositoryIds: string[]) =>
+    ipcRenderer.invoke(IpcChannels.WORKSPACE_REMOVE_ENTRY, { id, repositoryIds }),
+
   // ---------------------------------------------------------------------------
   // 設定操作
   // ---------------------------------------------------------------------------
