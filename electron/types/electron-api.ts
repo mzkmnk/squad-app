@@ -127,6 +127,26 @@ export interface ElectronAPI {
    */
   openWorkspace: (id: string) => Promise<IpcResult<null>>;
 
+  /**
+   * 既存の Workspace にエントリを一括追加する。
+   * fetch → Worktree 作成 → ストア更新 → .code-workspace 再生成の順で処理する。
+   * エラー発生時は作成済み Worktree のロールバック削除を行う。
+   * @param id - 対象 Workspace の UUID
+   * @param entries - 追加するエントリの配列
+   * @returns 更新後の Workspace を含む IpcResult
+   */
+  addWorkspaceEntry: (id: string, entries: WorkspaceCreateEntry[]) => Promise<IpcResult<Workspace>>;
+
+  /**
+   * 既存の Workspace からエントリを一括削除する。
+   * Worktree 削除 → ストア更新 → .code-workspace 再生成の順で処理する。
+   * Worktree 削除はベストエフォート（失敗しても継続）。
+   * @param id - 対象 Workspace の UUID
+   * @param repositoryIds - 削除対象のリポジトリ UUID の配列
+   * @returns 更新後の Workspace を含む IpcResult
+   */
+  removeWorkspaceEntry: (id: string, repositoryIds: string[]) => Promise<IpcResult<Workspace>>;
+
   // --- 設定操作 ---
 
   /**

@@ -17,6 +17,8 @@ export const IpcErrorCode = {
   IDE_NOT_FOUND: 'IDE_NOT_FOUND',
   /** IDE の起動に失敗した */
   IDE_LAUNCH_FAILED: 'IDE_LAUNCH_FAILED',
+  /** 同一リポジトリのエントリが既に Workspace に存在する */
+  DUPLICATE_ENTRY: 'DUPLICATE_ENTRY',
   /** 予期しないエラー。上記に該当しない全ての例外がマッピングされる */
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;

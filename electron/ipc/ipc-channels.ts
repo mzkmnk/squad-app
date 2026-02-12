@@ -47,6 +47,10 @@ export const IpcChannels = {
   WORKSPACE_DELETE: 'workspace:delete',
   /** ID を指定して Workspace を VS Code で開く */
   WORKSPACE_OPEN: 'workspace:open',
+  /** 既存の Workspace にエントリを一括追加する */
+  WORKSPACE_ADD_ENTRY: 'workspace:add-entry',
+  /** 既存の Workspace からエントリを一括削除する */
+  WORKSPACE_REMOVE_ENTRY: 'workspace:remove-entry',
 
   // 設定操作
 
@@ -195,4 +199,30 @@ export interface WorkspaceOpenRequest {
 export interface SettingsUpdateRequest {
   /** 更新する設定 */
   settings: Settings;
+}
+
+/**
+ * `workspace:add-entry` チャネルのリクエスト。
+ *
+ * 1つの Workspace に対して複数エントリを一括追加する。
+ * 各エントリは WorkspaceCreateEntry と同じフィールド構造を持つ。
+ */
+export interface WorkspaceAddEntryRequest {
+  /** 対象 Workspace の UUID */
+  id: string;
+  /** 追加するエントリの配列（複数一括対応） */
+  entries: WorkspaceCreateEntry[];
+}
+
+/**
+ * `workspace:remove-entry` チャネルのリクエスト。
+ *
+ * 1つの Workspace から複数エントリを一括削除する。
+ * repositoryId の配列で削除対象を指定する。
+ */
+export interface WorkspaceRemoveEntryRequest {
+  /** 対象 Workspace の UUID */
+  id: string;
+  /** 削除対象のリポジトリ UUID の配列（複数一括対応） */
+  repositoryIds: string[];
 }
