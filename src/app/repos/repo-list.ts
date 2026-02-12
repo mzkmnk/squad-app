@@ -47,7 +47,9 @@ export class RepoListComponent {
 
     const result = await this.repoService.getRepositories();
     if (result.success) {
-      this.repositories.set(result.data);
+      this.repositories.set(
+        [...result.data].sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
+      );
     } else {
       toast.error(result.error.message);
     }
@@ -55,7 +57,7 @@ export class RepoListComponent {
   }
 
   protected onRepoAdded(repo: Repository): void {
-    this.repositories.update((repos) => [...repos, repo]);
+    this.repositories.update((repos) => [repo, ...repos]);
   }
 
   protected async removeRepository(id: string): Promise<void> {

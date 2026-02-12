@@ -64,7 +64,9 @@ export class WorkspaceListComponent {
     ]);
 
     if (wsResult.success) {
-      this.workspaces.set(wsResult.data);
+      this.workspaces.set(
+        [...wsResult.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      );
     } else {
       toast.error(wsResult.error.message);
     }
@@ -86,7 +88,7 @@ export class WorkspaceListComponent {
   }
 
   protected onWorkspaceCreated(ws: Workspace): void {
-    this.workspaces.update((list) => [...list, ws]);
+    this.workspaces.update((list) => [ws, ...list]);
   }
 
   protected async openWorkspace(id: string): Promise<void> {
