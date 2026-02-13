@@ -37,7 +37,46 @@ Workspace 編集ページの Angular UI を実装する。WorkspaceService の�
 - [x] `src/app/workspaces/workspace-edit.html` のリポジトリ選択を素の `<select>` から `brn-select` + `hlm-select-*` に置き換え
 - [x] `onRepoSelected` メソッドの引数型を `brn-select` の `valueChange` に合わせて調整
 
-### 7. 最終確認
+### 7. コンポーネント分割リファクタリング
+
+WorkspaceEditComponent を責務ごとの小さなサブコンポーネントに分割する。
+
+#### 7-1. WorkspaceEntryListComponent 作成
+
+- [x] `src/app/workspaces/workspace-entry-list.ts` — 既存エントリ一覧コンポーネント
+  - input: `entries` (WorkspaceEntry[]), `pendingRemovals` (Set<string>), `repoMap` (Map<string, Repository>)
+  - output: `markForRemoval` (string), `unmarkRemoval` (string)
+- [x] `src/app/workspaces/workspace-entry-list.html` — テンプレート
+
+#### 7-2. WorkspaceAddEntryFormComponent 作成
+
+- [x] `src/app/workspaces/workspace-add-entry-form.ts` — 新規エントリ追加フォームコンポーネント
+  - input: `availableRepos` (Repository[]), `branchesMap` (Map<string, string[]>), `disabled` (boolean)
+  - output: `entryAdded` (PendingEntry)
+  - 内部状態: selectedRepoId, branchSelection, fetchingIds
+- [x] `src/app/workspaces/workspace-add-entry-form.html` — テンプレート（リポジトリ選択 + ブランチ選択 + 追加ボタン）
+
+#### 7-3. WorkspacePendingListComponent 作成
+
+- [x] `src/app/workspaces/workspace-pending-list.ts` — 追加予定エントリ一覧コンポーネント
+  - input: `entries` (PendingEntry[]), `repoMap` (Map<string, Repository>)
+  - output: `cancelAddition` (string)
+- [x] `src/app/workspaces/workspace-pending-list.html` — テンプレート
+
+#### 7-4. WorkspaceDeletePromptComponent 作成
+
+- [x] `src/app/workspaces/workspace-delete-prompt.ts` — 全エントリ削除時の Workspace 削除提案コンポーネント
+  - input: `workspaceName` (string)
+  - output: `deleteConfirmed` (void)
+- [x] `src/app/workspaces/workspace-delete-prompt.html` — テンプレート
+
+#### 7-5. WorkspaceEditComponent リファクタリング
+
+- [x] `workspace-edit.ts` からサブコンポーネントに移譲した状態・メソッドを削除し、サブコンポーネントを import
+- [x] `workspace-edit.html` をサブコンポーネントの呼び出しに置き換え
+- [x] 不要になった import を削除
+
+#### 7-6. 最終確認
 
 - [x] ビルド確認（`pnpm build`）
 - [x] lint 確認（`pnpm lint:fix`）
@@ -51,10 +90,4 @@ Workspace 編集ページの Angular UI を実装する。WorkspaceService の�
 | WorkspaceEditComponent    | UI-2, UI-3, FR-1, FR-2, FR-3, FR-4 | 編集ページ全体（エントリ管理 + バッチ確定）        |
 | ルーティング追加          | UI-1                               | `/workspaces/:id/edit` ルート                      |
 | workspace-list 編集ボタン | UI-1                               | 一覧カードに編集アイコンボタン追加                 |
-
-## 承認
-
-以下のいずれかを選択してください:
-
-- 🔧 **変更を依頼**
-- ✅ **承認して次のステージへ**
+| コンポーネント分割        | リファクタリング                   | 責務分離による保守性向上                           |

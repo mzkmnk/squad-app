@@ -1,0 +1,80 @@
+<ng-container *transloco="let t">
+  <div class="mx-auto max-w-4xl p-6">
+    <!-- ヘッダー -->
+    <div class="mb-6 flex items-center gap-4">
+      <button
+        hlmBtn
+        variant="ghost"
+        size="icon"
+        (click)="goBack()"
+        [attr.aria-label]="t('workspaceEdit.backAriaLabel')"
+      >
+        <ng-icon hlm name="lucideArrowLeft" size="sm" />
+      </button>
+      <h1 class="text-2xl font-bold">
+        {{ t('workspaceEdit.title', { name: workspace()?.displayName }) }}
+      </h1>
+      <div class="ml-auto flex gap-2">
+        <button hlmBtn [disabled]="!canSave()" (click)="save()">
+          @if (saving()) {
+            <hlm-spinner class="mr-1 text-xs" />
+          }
+          {{ saving() ? t('workspaceEdit.saving') : t('workspaceEdit.save') }}
+        </button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="flex items-center justify-center gap-2 py-8">
+        <hlm-spinner />
+        <span class="text-muted-foreground text-sm">{{ t('common.loading') }}</span>
+      </div>
+    } @else if (notFound()) {
+      <section hlmCard class="text-center">
+        <div hlmCardHeader>
+          <h3 hlmCardTitle>{{ t('errors.NOT_FOUND') }}</h3>
+        </div>
+      </section>
+    } @else {
+      <!-- 既存エントリ一覧 -->
+      <app-workspace-entry-list
+        [entries]="workspace()?.entries ?? []"
+        [pendingRemovals]="pendingRemovals()"
+        [repoMap]="repoMap()"
+        (markForRemoval)="markForRemoval($event)"
+        (unmarkRemoval)="unmarkRemoval($event)"
+      />
+
+      <brn-separator hlmSeparator class="my-6" />
+
+      <!-- 新規エントリ追加セクション -->
+      <app-workspace-add-entry-form
+        [availableRepos]="availableRepos()"
+        [branchesMap]="branchesMap()"
+        [fetchingIds]="fetchingIds()"
+        [disabled]="saving()"
+        (entryAdded)="onEntryAdded($event)"
+        (repoSelected)="onRepoSelected($event)"
+      />
+
+      <!-- 追加予定エントリ一覧 -->
+      @if (pendingAdditions().length > 0) {
+        <brn-separator hlmSeparator class="my-6" />
+        <app-workspace-pending-list
+          [entries]="pendingAdditions()"
+          [repoMap]="repoMap()"
+          (cancelAddition)="cancelAddition($event)"
+        />
+      }
+
+      <!-- 全エントリ削除時の Workspace 削除提案 -->
+      @if (willBeEmpty() && hasChanges()) {
+        <brn-separator hlmSeparator class="my-6" />
+        <app-workspace-delete-prompt
+          [workspaceName]="workspace()?.displayName ?? ''"
+          (deleteConfirmed)="deleteWorkspace()"
+        />
+      }
+    }
+  </div>
+</ng-container>
