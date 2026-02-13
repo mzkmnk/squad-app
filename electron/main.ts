@@ -8,6 +8,7 @@ import { GitService } from './git/git-service.js';
 import { CodeWorkspaceService } from './git/code-workspace-service.js';
 import { registerIpcHandlers } from './ipc/ipc-handlers.js';
 import { detectInstalledIdes } from './ide/ide-detector.js';
+import { BackgroundFetchService } from './git/background-fetch-service.js';
 
 // macOS/Linux の GUI アプリではシェルの $PATH が継承されないため、
 // ログインシェルから完全な PATH を取得して process.env.PATH を修正する
@@ -16,6 +17,7 @@ fixPath();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null;
+let backgroundFetchService: BackgroundFetchService | null = null;
 
 async function initializeServices(): Promise<void> {
   const paths = createSquadPaths();
@@ -31,6 +33,9 @@ async function initializeServices(): Promise<void> {
     paths,
     ideDetector: { detectInstalledIdes },
   });
+
+  backgroundFetchService = new BackgroundFetchService(gitService, store);
+  backgroundFetchService.start();
 }
 
 function createWindow(): void {
@@ -66,6 +71,10 @@ app.on('ready', () => {
       console.error('Failed to initialize services:', error);
       app.quit();
     });
+});
+
+app.on('before-quit', () => {
+  backgroundFetchService?.stop();
 });
 
 app.on('window-all-closed', () => {

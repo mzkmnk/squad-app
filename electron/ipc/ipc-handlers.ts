@@ -196,6 +196,14 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
         if (!repo) {
           return notFoundResult('Repository', id);
         }
+
+        // ベストエフォート fetch: 失敗してもキャッシュ済みブランチ一覧を返す
+        try {
+          await gitService.fetch(repo.name);
+        } catch {
+          // ネットワークエラー等は無視して続行
+        }
+
         const branches = await gitService.getRemoteBranches(repo.name);
         return successResult(branches);
       } catch (error) {
@@ -269,8 +277,13 @@ export function registerIpcHandlers(deps: IpcHandlerDeps): void {
         // 2. Workspace をストアに登録（suffix 付き名前を取得）
         workspace = await store.addWorkspace({ name, entries });
 
-        // 3. 各エントリに対して Worktree を作成
+        // 3. 各エントリに対して fetch → Worktree を作成
+        const fetchedRepos = new Set<string>();
         for (const resolved of resolvedEntries) {
+          if (!fetchedRepos.has(resolved.repo.name)) {
+            await gitService.fetch(resolved.repo.name);
+            fetchedRepos.add(resolved.repo.name);
+          }
           await gitService.addWorktree(
             resolved.repo.name,
             workspace.name,

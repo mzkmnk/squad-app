@@ -338,10 +338,12 @@ describe('repo:branches', () => {
   it('存在するリポジトリのブランチ一覧が返る', async () => {
     const repo = makeRepo();
     vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.getRemoteBranches).mockResolvedValue(['main', 'develop']);
 
     const result = await invoke('repo:branches', { id: 'repo-1' });
 
+    expect(deps.gitService.fetch).toHaveBeenCalledWith('backend');
     expect(deps.gitService.getRemoteBranches).toHaveBeenCalledWith('backend');
     expect(result).toEqual({ success: true, data: ['main', 'develop'] });
   });
@@ -360,6 +362,7 @@ describe('repo:branches', () => {
   it('getRemoteBranches がエラーをスローした場合に GIT_OPERATION_FAILED が返る', async () => {
     const repo = makeRepo();
     vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.getRemoteBranches).mockRejectedValue(
       new GitOperationError('branch list failed', 1, 'fatal: not a git repo'),
     );
@@ -370,6 +373,19 @@ describe('repo:branches', () => {
       success: false,
       error: { code: IpcErrorCode.GIT_OPERATION_FAILED, message: 'fatal: not a git repo' },
     });
+  });
+
+  it('fetch 失敗時もブランチ一覧が返る（ベストエフォート）', async () => {
+    const repo = makeRepo();
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.gitService.fetch).mockRejectedValue(new Error('network error'));
+    vi.mocked(deps.gitService.getRemoteBranches).mockResolvedValue(['main']);
+
+    const result = await invoke('repo:branches', { id: 'repo-1' });
+
+    expect(deps.gitService.fetch).toHaveBeenCalledWith('backend');
+    expect(deps.gitService.getRemoteBranches).toHaveBeenCalledWith('backend');
+    expect(result).toEqual({ success: true, data: ['main'] });
   });
 });
 
@@ -457,11 +473,13 @@ describe('workspace:create', () => {
     const ws = makeWorkspace();
     vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
     vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.addWorktree).mockResolvedValue('feature/payment-abcd1234');
     vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
 
     const result = await invoke('workspace:create', createRequest);
 
+    expect(deps.gitService.fetch).toHaveBeenCalledWith('backend');
     expect(deps.store.addWorkspace).toHaveBeenCalledWith({
       name: 'feature-payment',
       entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
@@ -503,6 +521,7 @@ describe('workspace:create', () => {
 
     vi.mocked(deps.store.getRepository).mockResolvedValueOnce(repo1).mockResolvedValueOnce(repo2);
     vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.addWorktree)
       .mockResolvedValueOnce('main-11111111')
       .mockRejectedValueOnce(new GitOperationError('worktree failed', 1, 'error'));
@@ -534,6 +553,7 @@ describe('workspace:create', () => {
 
     vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
     vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.addWorktree)
       .mockResolvedValueOnce('feature/payment-11111111')
       .mockRejectedValueOnce(new GitOperationError('second failed', 1, 'err'));
@@ -562,6 +582,7 @@ describe('workspace:create', () => {
     const ws = makeWorkspace();
     vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
     vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.addWorktree).mockResolvedValue('feature/payment-abcd1234');
     vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
 
@@ -583,6 +604,7 @@ describe('workspace:create', () => {
     const ws = makeWorkspace();
     vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
     vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.addWorktree).mockResolvedValue('feature/new-abcd1234');
     vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
 
@@ -611,6 +633,7 @@ describe('workspace:create', () => {
 
     vi.mocked(deps.store.getRepository).mockResolvedValueOnce(repo1).mockResolvedValueOnce(repo2);
     vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.addWorktree)
       .mockResolvedValueOnce('main-11111111')
       .mockResolvedValueOnce('feature/new-22222222');
@@ -647,6 +670,7 @@ describe('workspace:create', () => {
 
     vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
     vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.addWorktree).mockRejectedValue(
       new GitOperationError('branch create failed', 128, 'fatal: not a valid ref'),
     );
@@ -665,6 +689,62 @@ describe('workspace:create', () => {
         code: IpcErrorCode.GIT_OPERATION_FAILED,
         message: 'fatal: not a valid ref',
       },
+    });
+  });
+
+  it('同一リポジトリが複数エントリにある場合、fetch は1回のみ呼ばれる', async () => {
+    const repo = makeRepo();
+    const ws = makeWorkspace({
+      entries: [
+        { repositoryId: 'repo-1', branch: 'main' },
+        { repositoryId: 'repo-1', branch: 'develop' },
+      ],
+    });
+
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
+    vi.mocked(deps.gitService.addWorktree)
+      .mockResolvedValueOnce('main-11111111')
+      .mockResolvedValueOnce('develop-22222222');
+    vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:create', {
+      name: 'feature-payment',
+      entries: [
+        { repositoryId: 'repo-1', branch: 'main' },
+        { repositoryId: 'repo-1', branch: 'develop' },
+      ],
+    });
+
+    expect(deps.gitService.fetch).toHaveBeenCalledTimes(1);
+    expect(deps.gitService.fetch).toHaveBeenCalledWith('backend');
+    expect(deps.gitService.addWorktree).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ success: true, data: ws });
+  });
+
+  it('fetch 失敗時はエラーが返りロールバックが実行される', async () => {
+    const repo = makeRepo();
+    const ws = makeWorkspace();
+
+    vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
+    vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockRejectedValue(
+      new GitOperationError('fetch failed', 128, 'fatal: could not fetch'),
+    );
+    vi.mocked(deps.codeWorkspaceService.remove).mockResolvedValue(undefined);
+    vi.mocked(deps.store.removeWorkspace).mockResolvedValue(undefined);
+
+    const result = await invoke('workspace:create', {
+      name: 'feature-payment',
+      entries: [{ repositoryId: 'repo-1', branch: 'feature/payment' }],
+    });
+
+    expect(deps.gitService.addWorktree).not.toHaveBeenCalled();
+    expect(deps.store.removeWorkspace).toHaveBeenCalledWith(ws.id);
+    expect(result).toEqual({
+      success: false,
+      error: { code: IpcErrorCode.GIT_OPERATION_FAILED, message: 'fatal: could not fetch' },
     });
   });
 });
@@ -864,6 +944,7 @@ describe('workspace:create (IDE 起動削除)', () => {
     const ws = makeWorkspace();
     vi.mocked(deps.store.getRepository).mockResolvedValue(repo);
     vi.mocked(deps.store.addWorkspace).mockResolvedValue(ws);
+    vi.mocked(deps.gitService.fetch).mockResolvedValue(undefined);
     vi.mocked(deps.gitService.addWorktree).mockResolvedValue('feature/payment-abcd1234');
     vi.mocked(deps.codeWorkspaceService.generate).mockResolvedValue(undefined);
 
