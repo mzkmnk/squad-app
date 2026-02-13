@@ -7,6 +7,11 @@ export const routes: Routes = [
       import('./workspaces/workspace-list').then((m) => m.WorkspaceListComponent),
   },
   {
+    path: 'workspaces/:id/edit',
+    loadComponent: () =>
+      import('./workspaces/workspace-edit').then((m) => m.WorkspaceEditComponent),
+  },
+  {
     path: 'repos',
     loadComponent: () => import('./repos/repo-list').then((m) => m.RepoListComponent),
   },
