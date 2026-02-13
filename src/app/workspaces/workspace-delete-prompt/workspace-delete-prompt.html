@@ -1,0 +1,31 @@
+<ng-container *transloco="let t">
+  <section hlmCard class="border-destructive/20 text-center">
+    <div hlmCardHeader>
+      <h3 hlmCardTitle>{{ t('workspaceEdit.allEntriesRemoved') }}</h3>
+      <p hlmCardDescription>{{ t('workspaceEdit.deleteWorkspacePrompt') }}</p>
+    </div>
+    <div hlmCardContent>
+      <hlm-alert-dialog>
+        <button hlmBtn variant="destructive" hlmAlertDialogTrigger>
+          {{ t('workspaceEdit.deleteWorkspace') }}
+        </button>
+        <hlm-alert-dialog-content *hlmAlertDialogPortal="let ctx">
+          <hlm-alert-dialog-header>
+            <h2 hlmAlertDialogTitle>{{ t('workspaces.deleteConfirmTitle') }}</h2>
+            <p hlmAlertDialogDescription>
+              {{ t('workspaces.deleteConfirmDescription', { name: workspaceName() }) }}
+            </p>
+          </hlm-alert-dialog-header>
+          <hlm-alert-dialog-footer>
+            <button hlmAlertDialogCancel (click)="ctx.close()">
+              {{ t('common.cancel') }}
+            </button>
+            <button hlmAlertDialogAction (click)="deleteConfirmed.emit()">
+              {{ t('workspaces.deleteAction') }}
+            </button>
+          </hlm-alert-dialog-footer>
+        </hlm-alert-dialog-content>
+      </hlm-alert-dialog>
+    </div>
+  </section>
+</ng-container>

@@ -9,6 +9,10 @@ export class WorkspaceService {
     return window.electronAPI.getWorkspaces();
   }
 
+  getWorkspace(id: string): Promise<IpcResult<Workspace>> {
+    return window.electronAPI.getWorkspace(id);
+  }
+
   createWorkspace(name: string, entries: WorkspaceCreateEntry[]): Promise<IpcResult<Workspace>> {
     return window.electronAPI.createWorkspace(name, entries);
   }
@@ -19,5 +23,13 @@ export class WorkspaceService {
 
   openWorkspace(id: string): Promise<IpcResult<null>> {
     return window.electronAPI.openWorkspace(id);
+  }
+
+  addEntry(id: string, entries: WorkspaceCreateEntry[]): Promise<IpcResult<Workspace>> {
+    return window.electronAPI.addWorkspaceEntry(id, entries);
+  }
+
+  removeEntry(id: string, repositoryIds: string[]): Promise<IpcResult<Workspace>> {
+    return window.electronAPI.removeWorkspaceEntry(id, repositoryIds);
   }
 }

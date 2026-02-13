@@ -1,0 +1,35 @@
+<ng-container *transloco="let t">
+  <section>
+    <h2 class="mb-2 text-sm font-semibold">{{ t('workspaceEdit.pendingAdditions') }}</h2>
+    <div class="flex flex-col gap-2">
+      @for (entry of entries(); track entry.repositoryId) {
+        <div
+          class="border-primary/20 bg-primary/5 flex items-center justify-between rounded-md border px-3 py-2"
+        >
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">{{ getRepoName(entry.repositoryId) }}</span>
+            <ng-icon hlm name="lucideGitBranch" size="xs" class="text-muted-foreground" />
+            <span class="text-muted-foreground text-sm">{{ getEntryBranchName(entry) }}</span>
+            @if (entry.type === 'new') {
+              <span
+                class="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-[10px] font-medium"
+              >
+                {{ t('workspaceEdit.newBranch') }}
+              </span>
+            }
+          </div>
+          <button
+            hlmBtn
+            variant="ghost"
+            size="icon"
+            class="text-muted-foreground hover:text-destructive"
+            (click)="cancelAddition.emit(entry.repositoryId)"
+            [attr.aria-label]="t('workspaceEdit.cancelAddAriaLabel')"
+          >
+            <ng-icon hlm name="lucideTrash2" size="xs" />
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+</ng-container>

@@ -3,7 +3,7 @@ name: create-pr
 description: >
   GitHub PR 作成エージェント — 現在のブランチの変更内容を分析し、
   適切なタイトル・本文を生成して GitHub PR を作成する。
-model: claude-opus-4.6
+model: claude-sonnet-4.5
 tools: ['@builtin']
 ---
 

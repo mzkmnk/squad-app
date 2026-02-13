@@ -13,13 +13,13 @@ import { HlmIconImports } from '@spartan-ng/helm/icon';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
-import { BranchComboboxComponent } from '../shared/branch-combobox/branch-combobox';
-import { CreateBranchDialogComponent } from '../shared/create-branch-dialog/create-branch-dialog';
-import type { CreateBranchResult } from '../shared/create-branch-dialog/create-branch-dialog-types';
-import { RepositoryService } from '../services/repository.service';
-import { WorkspaceService } from '../services/workspace.service';
-import type { Repository, Workspace } from '../../../electron/types/models';
-import type { WorkspaceCreateEntry } from '../../../electron/ipc/ipc-channels';
+import { BranchComboboxComponent } from '../../shared/branch-combobox/branch-combobox';
+import { CreateBranchDialogComponent } from '../../shared/create-branch-dialog/create-branch-dialog';
+import type { CreateBranchResult } from '../../shared/create-branch-dialog/create-branch-dialog-types';
+import { RepositoryService } from '../../services/repository.service';
+import { WorkspaceService } from '../../services/workspace.service';
+import { Repository, Workspace } from '../../../../electron/types/models';
+import { WorkspaceCreateEntry } from '../../../../electron/ipc/ipc-channels';
 
 /** 新規ブランチ作成ダイアログからの戻り値 */
 export interface NewBranchInfo {

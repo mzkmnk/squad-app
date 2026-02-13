@@ -1,0 +1,76 @@
+<ng-container *transloco="let t">
+  <section>
+    <h2 class="mb-2 text-sm font-semibold">{{ t('workspaceEdit.addEntry') }}</h2>
+    @if (availableRepos().length === 0 && !selectedRepoId()) {
+      <p class="text-muted-foreground text-sm">{{ t('workspaceEdit.noAvailableRepos') }}</p>
+    } @else {
+      <div class="flex flex-col gap-3">
+        <brn-select
+          [value]="selectedRepoId() ?? ''"
+          (valueChange)="onRepoSelected($event)"
+          [disabled]="disabled()"
+          [placeholder]="t('workspaceEdit.selectRepo')"
+        >
+          <hlm-select-trigger class="w-full">
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content>
+            @for (repo of availableRepos(); track repo.id) {
+              <hlm-option [value]="repo.id">{{ repo.displayName }}</hlm-option>
+            }
+          </hlm-select-content>
+        </brn-select>
+        @if (selectedRepoId()) {
+          @if (isSelectedRepoReady()) {
+            <div class="flex items-start gap-2">
+              <div class="min-w-0 flex-1">
+                <app-branch-combobox
+                  [branches]="selectedRepoBranches()"
+                  [value]="getSelectedBranchName()"
+                  [placeholder]="t('branches.searchPlaceholder')"
+                  [disabled]="disabled()"
+                  (valueChange)="selectBranch($event)"
+                />
+              </div>
+              <hlm-dialog>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  type="button"
+                  [disabled]="disabled()"
+                  hlmDialogTrigger
+                  [attr.aria-label]="t('workspaces.createNewBranch')"
+                >
+                  <ng-icon hlm name="lucideGitBranchPlus" size="sm" />
+                </button>
+                <hlm-dialog-content *hlmDialogPortal>
+                  <app-create-branch-dialog
+                    [branches]="selectedRepoBranches()"
+                    [defaultBranch]="getDefaultBranch()"
+                    (created)="onBranchCreated($event)"
+                  />
+                </hlm-dialog-content>
+              </hlm-dialog>
+            </div>
+            <button
+              hlmBtn
+              variant="outline"
+              [disabled]="!canAddEntry()"
+              (click)="confirmAddition()"
+            >
+              <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
+              {{ t('common.add') }}
+            </button>
+          } @else {
+            <div class="flex items-center gap-2 py-1">
+              <hlm-spinner class="text-xs" />
+              <span class="text-muted-foreground text-xs">{{
+                t('workspaces.fetchingBranches')
+              }}</span>
+            </div>
+          }
+        }
+      </div>
+    }
+  </section>
+</ng-container>

@@ -48,11 +48,22 @@
               }
 
               <div
-                class="absolute top-2 right-2 z-10"
+                class="absolute top-2 right-2 z-10 flex gap-1"
                 tabindex="-1"
                 (click)="$event.stopPropagation()"
                 (keyup)="$event.stopPropagation()"
               >
+                <button
+                  hlmBtn
+                  variant="ghost"
+                  size="icon"
+                  class="text-muted-foreground hover:text-foreground h-7 w-7"
+                  [disabled]="deletingIds().has(ws.id) || openingIds().has(ws.id)"
+                  [attr.aria-label]="t('workspaceEdit.editAriaLabel')"
+                  (click)="editWorkspace(ws.id)"
+                >
+                  <ng-icon hlm name="lucidePencil" size="xs" />
+                </button>
                 <hlm-alert-dialog>
                   <button
                     hlmAlertDialogTrigger
