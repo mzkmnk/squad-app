@@ -1,8 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideGitBranch, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
+import { lucideGitBranch, lucidePencil, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
 import { toast } from 'ngx-sonner';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
@@ -10,10 +11,10 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
 import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
-import { RepositoryService } from '../services/repository.service';
-import { WorkspaceService } from '../services/workspace.service';
-import { WorkspaceCreateFormComponent } from './workspace-create-form';
-import type { Repository, Workspace } from '../../../electron/types/models';
+import { RepositoryService } from '../../services/repository.service';
+import { WorkspaceService } from '../../services/workspace.service';
+import { WorkspaceCreateFormComponent } from '../workspace-create-form/workspace-create-form';
+import type { Repository, Workspace } from '../../../../electron/types/models';
 
 @Component({
   selector: 'app-workspace-list',
@@ -30,12 +31,13 @@ import type { Repository, Workspace } from '../../../electron/types/models';
     HlmIconImports,
     HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideGitBranch, lucidePlus, lucideTrash2 })],
+  providers: [provideIcons({ lucideGitBranch, lucidePencil, lucidePlus, lucideTrash2 })],
 })
 export class WorkspaceListComponent {
   private readonly workspaceService = inject(WorkspaceService);
   private readonly repoService = inject(RepositoryService);
   private readonly transloco = inject(TranslocoService);
+  private readonly router = inject(Router);
 
   protected readonly workspaces = signal<Workspace[]>([]);
   protected readonly repositories = signal<Repository[]>([]);
@@ -125,5 +127,9 @@ export class WorkspaceListComponent {
       next.delete(id);
       return next;
     });
+  }
+
+  protected editWorkspace(id: string): void {
+    void this.router.navigate(['/workspaces', id, 'edit']);
   }
 }

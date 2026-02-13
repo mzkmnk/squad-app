@@ -4,12 +4,12 @@ export const routes: Routes = [
   {
     path: 'workspaces',
     loadComponent: () =>
-      import('./workspaces/workspace-list').then((m) => m.WorkspaceListComponent),
+      import('./workspaces/workspace-list/workspace-list').then((m) => m.WorkspaceListComponent),
   },
   {
     path: 'workspaces/:id/edit',
     loadComponent: () =>
-      import('./workspaces/workspace-edit').then((m) => m.WorkspaceEditComponent),
+      import('./workspaces/workspace-edit/workspace-edit').then((m) => m.WorkspaceEditComponent),
   },
   {
     path: 'repos',
