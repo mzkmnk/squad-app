@@ -3,3 +3,5 @@ pnpm build
 pnpm electron:build
 pnpm exec playwright test --config e2e/playwright.config.ts
 pnpm exec playwright test --config e2e/playwright.vrt.config.ts
+
+
