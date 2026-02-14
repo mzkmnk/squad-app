@@ -104,6 +104,16 @@ export class GitService {
 
       // 作成したブランチで worktree を追加
       await this.execGit(['worktree', 'add', worktreeDir, actualBranch], repoDir);
+
+      // 作成したブランチの upstream を自身に設定する。
+      // sourceBranch から分岐した場合、upstream が origin/<sourceBranch> を引き継いでしまうため、
+      // 明示的に origin/<actualBranch> を設定して git push が正しいリモートブランチに向くようにする。
+      await this.execGit(['config', `branch.${actualBranch}.remote`, 'origin'], repoDir);
+      await this.execGit(
+        ['config', `branch.${actualBranch}.merge`, `refs/heads/${actualBranch}`],
+        repoDir,
+      );
+
       return actualBranch;
     }
 

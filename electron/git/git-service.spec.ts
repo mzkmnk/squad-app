@@ -638,4 +638,40 @@ describe('GitService - addWorktree (sourceBranch)', () => {
       service.addWorktree('test-repo', 'my-workspace', 'feature/new', ''),
     ).rejects.toThrow(GitValidationError);
   });
+
+  it('sourceBranch 省略時も upstream が自身に設定される', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    const actualBranch = await service.addWorktree('test-repo', 'my-workspace', 'main');
+
+    const repoDir = paths.repoDir('test-repo');
+    const { stdout } = await execFileAsync(
+      'git',
+      ['for-each-ref', '--format=%(upstream:short)', `refs/heads/${actualBranch}`],
+      { cwd: repoDir },
+    );
+    expect(stdout.trim()).toBe(`origin/${actualBranch}`);
+  });
+
+  it('sourceBranch 指定時も upstream が起点ブランチではなく自身に設定される', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    const actualBranch = await service.addWorktree(
+      'test-repo',
+      'my-workspace',
+      'feature/upstream-test',
+      'main',
+    );
+
+    const repoDir = paths.repoDir('test-repo');
+    const { stdout } = await execFileAsync(
+      'git',
+      ['for-each-ref', '--format=%(upstream:short)', `refs/heads/${actualBranch}`],
+      { cwd: repoDir },
+    );
+    // origin/main ではなく origin/<actualBranch> であること
+    expect(stdout.trim()).toBe(`origin/${actualBranch}`);
+  });
 });
