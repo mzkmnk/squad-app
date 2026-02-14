@@ -21,6 +21,8 @@
     "test:electron": "pnpm exec vitest run electron/ --exclude 'dist-electron/**'",
     "test:e2e": "pnpm build && pnpm electron:build && pnpm exec playwright test --config e2e/playwright.config.ts",
     "test:e2e:update": "pnpm build && pnpm electron:build && pnpm exec playwright test --config e2e/playwright.config.ts --update-snapshots",
+    "test:vrt": "pnpm build && pnpm electron:build && pnpm exec playwright test --config e2e/playwright.vrt.config.ts",
+    "test:vrt:update": "pnpm build && pnpm electron:build && pnpm exec playwright test --config e2e/playwright.vrt.config.ts --update-snapshots",
     "prepare": "husky"
   },
   "lint-staged": {

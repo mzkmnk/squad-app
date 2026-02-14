@@ -25,8 +25,4 @@ test.describe('ワークスペース一覧画面', () => {
   test('ワークスペースカードが存在しない', async () => {
     await expect(workspaceList.workspaceCards).toHaveCount(0);
   });
-
-  test('空状態の VRT スナップショット', async ({ window }) => {
-    await expect(window).toHaveScreenshot('workspace-list-empty.png');
-  });
 });

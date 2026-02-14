@@ -10,8 +10,6 @@ export class WorkspaceListPage {
   readonly heading: Locator;
   /** 「Create」ボタン */
   readonly createButton: Locator;
-  /** ローディングスピナー */
-  readonly spinner: Locator;
   /** 空状態のカードタイトル「No workspaces」 */
   readonly emptyTitle: Locator;
   /** 空状態の説明文 */
@@ -23,7 +21,6 @@ export class WorkspaceListPage {
     const content = page.locator('main');
     this.heading = content.getByRole('heading', { name: 'Workspaces', level: 1 });
     this.createButton = content.getByRole('button', { name: /Create/ });
-    this.spinner = content.locator('hlm-spinner');
     this.emptyTitle = content.getByRole('heading', { name: 'No workspaces', level: 3 });
     this.emptyDescription = content.getByText('Create a new workspace using the "Create" button.');
     this.workspaceCards = content.getByRole('listitem');
@@ -32,12 +29,12 @@ export class WorkspaceListPage {
   /** ローディングが完了するまで待機する */
   async waitForLoaded(): Promise<void> {
     await this.heading.waitFor({ state: 'visible' });
-    // スピナーが消えるまで待つ（表示されない場合もあるので短いタイムアウト）
-    await this.spinner
-      .first()
-      .waitFor({ state: 'hidden', timeout: 10_000 })
-      .catch(() => {
-        // スピナーが最初から表示されない場合は無視
-      });
+    // スピナーの有無を追わず、ローディング完了後に必ず表示されるコンテンツを待つ。
+    // 空状態（emptyTitle）またはワークスペースカード（workspaceCards）のいずれかが
+    // 表示されればローディング完了とみなす。
+    await Promise.race([
+      this.emptyTitle.waitFor({ state: 'visible' }),
+      this.workspaceCards.first().waitFor({ state: 'visible' }),
+    ]);
   }
 }

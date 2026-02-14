@@ -39,9 +39,13 @@ async function initializeServices(): Promise<void> {
 }
 
 function createWindow(): void {
+  // E2E テスト実行時はウィンドウを非表示にし、画面のチラつきを防止する
+  const isTest = process.env.NODE_ENV === 'test';
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    show: !isTest,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
