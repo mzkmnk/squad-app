@@ -35,3 +35,12 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Build for E2E
+        run: pnpm build && pnpm electron:build
+
+      - name: Install Playwright system dependencies
+        run: npx playwright install --with-deps
+
+      - name: E2E Test
+        run: xvfb-run --auto-servernum pnpm exec playwright test --config e2e/playwright.config.ts
