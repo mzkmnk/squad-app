@@ -22,7 +22,7 @@ export const test = base.extend<{
     const squadHome = fs.mkdtempSync(path.join(os.tmpdir(), 'squad-e2e-'));
 
     const app = await electron.launch({
-      args: [path.join(__dirname, '../../dist-electron/main.js')],
+      args: [path.join(import.meta.dirname, '../../dist-electron/main.js')],
       env: {
         ...process.env,
         SQUAD_HOME: squadHome,

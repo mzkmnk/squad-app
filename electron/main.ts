@@ -49,7 +49,7 @@ function createWindow(): void {
     },
   });
 
-  const isDev = !app.isPackaged;
+  const isDev = !app.isPackaged && process.env.NODE_ENV !== 'test';
   if (isDev) {
     void mainWindow.loadURL('http://localhost:4200');
     mainWindow.webContents.openDevTools();
