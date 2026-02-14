@@ -15,12 +15,17 @@ import * as os from 'node:os';
  * 実データ（`~/.squad/`）と分離する。
  */
 export const test = base.extend<{
+  squadHome: string;
   electronApp: ElectronApplication;
   window: Page;
 }>({
-  electronApp: async ({}, use) => {
+  squadHome: async ({}, use) => {
     const squadHome = fs.mkdtempSync(path.join(os.tmpdir(), 'squad-e2e-'));
+    await use(squadHome);
+    fs.rmSync(squadHome, { recursive: true, force: true });
+  },
 
+  electronApp: async ({ squadHome }, use) => {
     const app = await electron.launch({
       args: [path.join(import.meta.dirname, '../../dist-electron/main.js')],
       env: {
@@ -31,9 +36,7 @@ export const test = base.extend<{
     });
 
     await use(app);
-
     await app.close();
-    fs.rmSync(squadHome, { recursive: true, force: true });
   },
 
   window: async ({ electronApp }, use) => {
