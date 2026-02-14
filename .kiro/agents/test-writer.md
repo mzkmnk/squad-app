@@ -6,7 +6,7 @@ description: >
   Vitest + happy-dom 環境、vi.fn() モック、IpcResult パターンのテストに対応。
   使い方: 既存コードのテストを書きたいとき、またはテストカバレッジを向上させたいときに呼び出す。
 tools: ['@builtin']
-model: claude-sonnet-4.5
+model: claude-opus-4.6
 ---
 
 # テストコード生成エージェント

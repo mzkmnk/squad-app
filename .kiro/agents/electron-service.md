@@ -5,7 +5,7 @@ description: >
   サービス、IPC ハンドラー、型定義を生成する。IpcResult<T> パターン、zod バリデーション、
   エラーハンドリングに従う。使い方: 新しい IPC チャネルやバックエンドサービスを追加したいときに呼び出す。
 tools: ['@builtin']
-model: claude-sonnet-4.5
+model: claude-opus-4.6
 ---
 
 # Electron サービス・IPC 実装エージェント
