@@ -2,15 +2,32 @@
   <div class="mx-auto max-w-6xl p-6">
     <div class="mb-6 flex items-center justify-between">
       <h1 class="text-2xl font-bold">{{ t('repos.title') }}</h1>
-      <hlm-dialog>
-        <button hlmBtn hlmDialogTrigger>
-          <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
-          {{ t('common.add') }}
+      <div class="flex items-center gap-2">
+        <button
+          hlmBtn
+          variant="outline"
+          [disabled]="fetching() || repositories().length === 0"
+          (click)="fetchAll()"
+          [attr.aria-label]="t('repos.fetchAllAriaLabel')"
+        >
+          @if (fetching()) {
+            <hlm-spinner class="mr-1 text-xs" />
+            {{ t('repos.fetching') }}
+          } @else {
+            <ng-icon hlm name="lucideRefreshCw" size="sm" class="mr-1" />
+            {{ t('repos.fetchAll') }}
+          }
         </button>
-        <hlm-dialog-content *hlmDialogPortal>
-          <app-repo-add-form (submitted)="onRepoAdded($event)" />
-        </hlm-dialog-content>
-      </hlm-dialog>
+        <hlm-dialog>
+          <button hlmBtn hlmDialogTrigger>
+            <ng-icon hlm name="lucidePlus" size="sm" class="mr-1" />
+            {{ t('common.add') }}
+          </button>
+          <hlm-dialog-content *hlmDialogPortal>
+            <app-repo-add-form (submitted)="onRepoAdded($event)" />
+          </hlm-dialog-content>
+        </hlm-dialog>
+      </div>
     </div>
 
     @if (loading()) {
@@ -38,7 +55,7 @@
                     variant="ghost"
                     size="icon"
                     class="text-muted-foreground hover:text-destructive h-7 w-7"
-                    [disabled]="deletingIds().has(repo.id)"
+                    [disabled]="deletingIds().has(repo.id) || fetching()"
                     [attr.aria-label]="t('repos.deleteAriaLabel')"
                   >
                     @if (deletingIds().has(repo.id)) {

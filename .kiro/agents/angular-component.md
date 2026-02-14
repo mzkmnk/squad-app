@@ -6,7 +6,7 @@ description: >
   spartan-ng/helm UI コンポーネント、シグナル、ゾーンレス変更検知を使用する。
   使い方: 新しい画面やコンポーネントを追加したいときに呼び出す。
 tools: ['@builtin']
-model: claude-sonnet-4.5
+model: claude-opus-4.6
 ---
 
 # Angular コンポーネント生成エージェント

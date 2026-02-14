@@ -1,8 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { TranslocoDirective } from '@jsverse/transloco';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
+import { lucidePlus, lucideRefreshCw, lucideTrash2 } from '@ng-icons/lucide';
 import { toast } from 'ngx-sonner';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
@@ -29,14 +29,16 @@ import type { Repository } from '../../../electron/types/models';
     HlmSpinnerImports,
     HlmIconImports,
   ],
-  providers: [provideIcons({ lucideTrash2, lucidePlus })],
+  providers: [provideIcons({ lucideTrash2, lucidePlus, lucideRefreshCw })],
 })
 export class RepoListComponent {
   private readonly repoService = inject(RepositoryService);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly repositories = signal<Repository[]>([]);
   protected readonly loading = signal(true);
   protected readonly deletingIds = signal<Set<string>>(new Set());
+  protected readonly fetching = signal(false);
 
   constructor() {
     void this.loadRepositories();
@@ -54,6 +56,25 @@ export class RepoListComponent {
       toast.error(result.error.message);
     }
     this.loading.set(false);
+  }
+
+  protected async fetchAll(): Promise<void> {
+    this.fetching.set(true);
+
+    const repos = this.repositories();
+    let hasError = false;
+    for (const repo of repos) {
+      const result = await this.repoService.fetchRepository(repo.id);
+      if (!result.success) {
+        toast.error(result.error.message);
+        hasError = true;
+      }
+    }
+
+    this.fetching.set(false);
+    if (!hasError) {
+      toast.success(this.transloco.translate('repos.fetchAllSuccess'));
+    }
   }
 
   protected onRepoAdded(repo: Repository): void {

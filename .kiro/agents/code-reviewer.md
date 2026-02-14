@@ -5,7 +5,7 @@ description: >
   コードの品質、一貫性、潜在的な問題を指摘する。Angular/Electron 両方のコードに対応。
   使い方: 実装したコードのレビューを受けたいとき、またはリファクタリングの提案が欲しいときに呼び出す。
 tools: ['@builtin']
-model: claude-sonnet-4.5
+model: claude-opus-4.6
 ---
 
 # コードレビューエージェント
