@@ -330,6 +330,9 @@ describe('GitService - fetch', () => {
     const repoDir = paths.repoDir('test-repo');
 
     // ローカルブランチに独自コミットを作成して diverge させる
+    // commit-tree は author/committer 情報が必要（CI 環境にはグローバル設定がない）
+    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: repoDir });
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: repoDir });
     // 空のツリーを使って独自コミットを作成
     const { stdout: treeHash } = await execFileAsync('git', ['write-tree'], { cwd: repoDir });
     const { stdout: commitHash } = await execFileAsync(
