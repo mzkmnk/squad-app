@@ -30,11 +30,9 @@
 2. リポジトリ × ブランチの組み合わせで Workspace を作成
 3. git worktree + `.code-workspace` を自動生成し、VS Code をワンクリックで起動
 
-![ワークスペース一覧](screenshots/workspace-list.png)
+![ワークスペース一覧](../e2e/screenshots/workspace-list.vrt.spec.ts/workspace-list-multiple.png)
 
-![ワークスペース作成](screenshots/workspace-create.png)
-
-![リポジトリ一覧](screenshots/repo-list.png)
+![リポジトリ一覧](../e2e/screenshots/repo-list.vrt.spec.ts/repo-list-multiple.png)
 
 ## 主な機能
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { createSquadPaths } from './squad-paths.js';
@@ -12,6 +12,26 @@ describe('createSquadPaths', () => {
   it('デフォルトで ~/.squad を指す', () => {
     const paths = createSquadPaths();
     expect(paths.root).toBe(path.join(os.homedir(), '.squad'));
+  });
+
+  it('SQUAD_HOME 環境変数が設定されている場合はそれを使用する', () => {
+    vi.stubEnv('SQUAD_HOME', '/tmp/squad-test');
+    try {
+      const paths = createSquadPaths();
+      expect(paths.root).toBe('/tmp/squad-test');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('rootPath 引数が SQUAD_HOME より優先される', () => {
+    vi.stubEnv('SQUAD_HOME', '/tmp/squad-test');
+    try {
+      const paths = createSquadPaths('/explicit/root');
+      expect(paths.root).toBe('/explicit/root');
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it('repoDir("backend") が <root>/repos/backend.git を返す', () => {

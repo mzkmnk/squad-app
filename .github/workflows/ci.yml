@@ -35,3 +35,6 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Electron build check
+        run: pnpm electron:build

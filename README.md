@@ -30,11 +30,9 @@ When working on features that span multiple repositories, you typically have to 
 2. Create a Workspace by selecting repositories × branches
 3. Squad auto-generates git worktrees + `.code-workspace` and launches VS Code with one click
 
-![Workspace List](docs/screenshots/workspace-list.png)
+![Workspace List](e2e/screenshots/workspace-list.vrt.spec.ts/workspace-list-multiple.png)
 
-![Create Workspace](docs/screenshots/workspace-create.png)
-
-![Repository List](docs/screenshots/repo-list.png)
+![Repository List](e2e/screenshots/repo-list.vrt.spec.ts/repo-list-multiple.png)
 
 ## Features
 

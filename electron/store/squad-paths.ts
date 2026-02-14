@@ -60,11 +60,12 @@ export interface SquadPaths {
 /**
  * {@link SquadPaths} インスタンスを生成する。
  *
- * @param rootPath - ストアのルートパス。省略時は `~/.squad`
+ * @param rootPath - ストアのルートパス。省略時は `SQUAD_HOME` 環境変数、
+ *   未設定なら `~/.squad` をルートとする。
  * @returns パス解決オブジェクト
  */
 export function createSquadPaths(rootPath?: string): SquadPaths {
-  const root = rootPath ?? path.join(os.homedir(), '.squad');
+  const root = rootPath ?? process.env.SQUAD_HOME ?? path.join(os.homedir(), '.squad');
 
   return {
     root,
