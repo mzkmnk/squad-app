@@ -1,0 +1,5 @@
+# CI環境ではElectronが起動できないため、E2E/VRTテストはpush前にローカルで実行する
+pnpm build
+pnpm electron:build
+pnpm exec playwright test --config e2e/playwright.config.ts
+pnpm exec playwright test --config e2e/playwright.vrt.config.ts
