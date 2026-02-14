@@ -133,10 +133,80 @@ export class GitService {
     await this.execGit(['worktree', 'remove', worktreeDir, '--force'], repoDir);
   }
 
-  /** リモートから最新情報を取得する */
+  /** リモートから最新情報を取得する。fast-forward 可能なローカルブランチも同期する。 */
   async fetch(repoName: string): Promise<void> {
     const repoDir = this.paths.repoDir(repoName);
     await this.execGit(['fetch', '--all', '--prune'], repoDir);
+    await this.syncLocalBranches(repoDir);
+  }
+
+  /**
+   * ローカルブランチを対応する origin/* に fast-forward 同期する。
+   *
+   * Bare Repository では `git pull` が使えないため、fetch 後に
+   * refs/heads/* を refs/remotes/origin/* に合わせて明示的に更新する。
+   * fast-forward 不可能なブランチ（diverged）はスキップする。
+   * worktree でチェックアウト中のブランチもスキップする
+   * （update-ref でブランチ参照だけ進めるとワーキングツリーとの不整合が発生するため）。
+   */
+  private async syncLocalBranches(repoDir: string): Promise<void> {
+    // ローカルブランチ一覧を取得
+    const localOutput = await this.execGit(['branch', '--format=%(refname:short)'], repoDir);
+
+    const localBranches = localOutput
+      .trim()
+      .split('\n')
+      .filter((line) => line.length > 0);
+
+    // worktree でチェックアウト中のブランチを取得
+    // （update-ref でブランチ参照だけ進めるとワーキングツリーとの不整合が発生するため除外）
+    const checkedOutBranches = await this.getWorktreeCheckedOutBranches(repoDir);
+
+    for (const branch of localBranches) {
+      if (checkedOutBranches.has(branch)) {
+        continue;
+      }
+
+      try {
+        // 対応するリモートブランチが存在するか確認
+        await this.execGit(['rev-parse', '--verify', `refs/remotes/origin/${branch}`], repoDir);
+
+        // fast-forward 可能か確認（ローカルがリモートの祖先であること）
+        await this.execGit(
+          ['merge-base', '--is-ancestor', `refs/heads/${branch}`, `refs/remotes/origin/${branch}`],
+          repoDir,
+        );
+
+        // fast-forward 更新
+        await this.execGit(
+          ['update-ref', `refs/heads/${branch}`, `refs/remotes/origin/${branch}`],
+          repoDir,
+        );
+      } catch {
+        // リモートブランチが存在しない、fast-forward 不可能、
+        // またはその他のエラーの場合はスキップ（ベストエフォート）
+        continue;
+      }
+    }
+  }
+
+  /**
+   * worktree でチェックアウト中のブランチ名のセットを返す。
+   */
+  private async getWorktreeCheckedOutBranches(repoDir: string): Promise<Set<string>> {
+    try {
+      const output = await this.execGit(['worktree', 'list', '--porcelain'], repoDir);
+      const branches = new Set<string>();
+      for (const line of output.split('\n')) {
+        // "branch refs/heads/feature/xxx" 形式の行からブランチ名を抽出
+        if (line.startsWith('branch refs/heads/')) {
+          branches.add(line.replace('branch refs/heads/', ''));
+        }
+      }
+      return branches;
+    } catch {
+      return new Set();
+    }
   }
 
   /** リモートブランチ一覧を取得する */

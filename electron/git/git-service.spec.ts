@@ -289,6 +289,164 @@ describe('GitService - fetch', () => {
   it('Bare Repository が存在しない場合にエラー', async () => {
     await expect(service.fetch('nonexistent-repo')).rejects.toThrow();
   });
+
+  it('fetch 後にローカルブランチが origin に fast-forward 同期される', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    const repoDir = paths.repoDir('test-repo');
+
+    // リモートに新コミットを push
+    const workDir = path.join(tmpDir, 'work-for-sync');
+    await fs.mkdir(workDir, { recursive: true });
+    await execFileAsync('git', ['clone', remoteDir, '.'], { cwd: workDir });
+    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
+    await fs.writeFile(path.join(workDir, 'sync.txt'), 'sync');
+    await execFileAsync('git', ['add', '.'], { cwd: workDir });
+    await execFileAsync('git', ['commit', '-m', 'sync commit'], { cwd: workDir });
+    await execFileAsync('git', ['push'], { cwd: workDir });
+    await fs.rm(workDir, { recursive: true, force: true });
+
+    // 再度 fetch（syncLocalBranches が実行される）
+    await service.fetch('test-repo');
+
+    // ローカルの refs/heads/main が refs/remotes/origin/main と同じコミットを指す
+    const { stdout: localRef } = await execFileAsync('git', ['rev-parse', 'refs/heads/main'], {
+      cwd: repoDir,
+    });
+    const { stdout: remoteRef } = await execFileAsync(
+      'git',
+      ['rev-parse', 'refs/remotes/origin/main'],
+      { cwd: repoDir },
+    );
+    expect(localRef.trim()).toBe(remoteRef.trim());
+  });
+
+  it('fast-forward 不可能なブランチ（diverged）はスキップされる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    const repoDir = paths.repoDir('test-repo');
+
+    // ローカルブランチに独自コミットを作成して diverge させる
+    // 空のツリーを使って独自コミットを作成
+    const { stdout: treeHash } = await execFileAsync('git', ['write-tree'], { cwd: repoDir });
+    const { stdout: commitHash } = await execFileAsync(
+      'git',
+      ['commit-tree', treeHash.trim(), '-m', 'diverged local commit'],
+      { cwd: repoDir },
+    );
+    await execFileAsync('git', ['update-ref', 'refs/heads/main', commitHash.trim()], {
+      cwd: repoDir,
+    });
+
+    // リモートにも新コミットを push
+    const workDir = path.join(tmpDir, 'work-for-diverge');
+    await fs.mkdir(workDir, { recursive: true });
+    await execFileAsync('git', ['clone', remoteDir, '.'], { cwd: workDir });
+    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
+    await fs.writeFile(path.join(workDir, 'diverge.txt'), 'diverge');
+    await execFileAsync('git', ['add', '.'], { cwd: workDir });
+    await execFileAsync('git', ['commit', '-m', 'remote diverge commit'], { cwd: workDir });
+    await execFileAsync('git', ['push'], { cwd: workDir });
+    await fs.rm(workDir, { recursive: true, force: true });
+
+    // fetch 実行
+    await service.fetch('test-repo');
+
+    // ローカルの refs/heads/main は diverged コミットのまま（更新されない）
+    const { stdout: afterRef } = await execFileAsync('git', ['rev-parse', 'refs/heads/main'], {
+      cwd: repoDir,
+    });
+    expect(afterRef.trim()).toBe(commitHash.trim());
+    // リモートとは異なることを確認
+    const { stdout: remoteRef } = await execFileAsync(
+      'git',
+      ['rev-parse', 'refs/remotes/origin/main'],
+      { cwd: repoDir },
+    );
+    expect(afterRef.trim()).not.toBe(remoteRef.trim());
+  });
+
+  it('worktree でチェックアウト中のブランチはスキップされる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    const repoDir = paths.repoDir('test-repo');
+
+    // main ブランチで worktree を作成（チェックアウト状態にする）
+    const worktreeDir = path.join(tmpDir, 'worktree-checkout');
+    await execFileAsync('git', ['worktree', 'add', worktreeDir, 'main'], { cwd: repoDir });
+
+    // チェックアウト前のローカル refs/heads/main を記録
+    const { stdout: beforeRef } = await execFileAsync('git', ['rev-parse', 'refs/heads/main'], {
+      cwd: repoDir,
+    });
+
+    // リモートに新コミットを push
+    const workDir = path.join(tmpDir, 'work-for-worktree');
+    await fs.mkdir(workDir, { recursive: true });
+    await execFileAsync('git', ['clone', remoteDir, '.'], { cwd: workDir });
+    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
+    await fs.writeFile(path.join(workDir, 'worktree-test.txt'), 'worktree');
+    await execFileAsync('git', ['add', '.'], { cwd: workDir });
+    await execFileAsync('git', ['commit', '-m', 'worktree test commit'], { cwd: workDir });
+    await execFileAsync('git', ['push'], { cwd: workDir });
+    await fs.rm(workDir, { recursive: true, force: true });
+
+    // fetch 実行
+    await service.fetch('test-repo');
+
+    // チェックアウト中の main は更新されない
+    const { stdout: afterRef } = await execFileAsync('git', ['rev-parse', 'refs/heads/main'], {
+      cwd: repoDir,
+    });
+    expect(afterRef.trim()).toBe(beforeRef.trim());
+
+    // リモートは更新されていることを確認
+    const { stdout: remoteRef } = await execFileAsync(
+      'git',
+      ['rev-parse', 'refs/remotes/origin/main'],
+      { cwd: repoDir },
+    );
+    expect(remoteRef.trim()).not.toBe(beforeRef.trim());
+
+    // クリーンアップ: worktree を削除
+    await execFileAsync('git', ['worktree', 'remove', worktreeDir, '--force'], { cwd: repoDir });
+  });
+
+  it('リモートに対応するブランチがないローカルブランチはスキップされる', async () => {
+    await cloneBareForTest(paths, remoteDir, 'test-repo');
+    await service.fetch('test-repo');
+
+    const repoDir = paths.repoDir('test-repo');
+
+    // ローカルのみのブランチを作成（リモートには存在しない）
+    await execFileAsync('git', ['branch', 'local-only-branch', 'refs/remotes/origin/main'], {
+      cwd: repoDir,
+    });
+
+    // ブランチの現在のコミットを記録
+    const { stdout: beforeRef } = await execFileAsync(
+      'git',
+      ['rev-parse', 'refs/heads/local-only-branch'],
+      { cwd: repoDir },
+    );
+
+    // fetch 実行（エラーなく完了すること）
+    await service.fetch('test-repo');
+
+    // ローカルのみのブランチがそのまま残っている
+    const { stdout: afterRef } = await execFileAsync(
+      'git',
+      ['rev-parse', 'refs/heads/local-only-branch'],
+      { cwd: repoDir },
+    );
+    expect(afterRef.trim()).toBe(beforeRef.trim());
+  });
 });
 
 // --- getRemoteBranches ---
