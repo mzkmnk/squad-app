@@ -54,6 +54,39 @@ async function cloneBareForTest(
   );
 }
 
+/**
+ * テスト用: リモートに新しいコミットを push するヘルパー関数
+ * テスト内で何度も出現する git クローン → コミット → push パターンを抽出
+ */
+async function pushNewCommitToRemote(
+  remote: string,
+  fileName: string,
+  message: string,
+  branchName?: string,
+): Promise<void> {
+  const workDir = path.join(tmpDir, `work-for-${fileName}`);
+  await fs.mkdir(workDir, { recursive: true });
+  await execFileAsync('git', ['clone', remote, '.'], { cwd: workDir });
+  await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
+  await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
+
+  if (branchName) {
+    await execFileAsync('git', ['checkout', '-b', branchName], { cwd: workDir });
+  }
+
+  await fs.writeFile(path.join(workDir, fileName), fileName);
+  await execFileAsync('git', ['add', '.'], { cwd: workDir });
+  await execFileAsync('git', ['commit', '-m', message], { cwd: workDir });
+
+  if (branchName) {
+    await execFileAsync('git', ['push', 'origin', branchName], { cwd: workDir });
+  } else {
+    await execFileAsync('git', ['push'], { cwd: workDir });
+  }
+
+  await fs.rm(workDir, { recursive: true, force: true });
+}
+
 beforeEach(async () => {
   tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'squad-git-test-'));
   remoteDir = path.join(tmpDir, 'remote.git');
@@ -268,17 +301,7 @@ describe('GitService - fetch', () => {
     await service.fetch('test-repo');
 
     // リモートに新ブランチを追加
-    const workDir = path.join(tmpDir, 'work-for-fetch');
-    await fs.mkdir(workDir, { recursive: true });
-    await execFileAsync('git', ['clone', remoteDir, '.'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
-    await execFileAsync('git', ['checkout', '-b', 'feature/new-branch'], { cwd: workDir });
-    await fs.writeFile(path.join(workDir, 'new.txt'), 'new');
-    await execFileAsync('git', ['add', '.'], { cwd: workDir });
-    await execFileAsync('git', ['commit', '-m', 'add new'], { cwd: workDir });
-    await execFileAsync('git', ['push', 'origin', 'feature/new-branch'], { cwd: workDir });
-    await fs.rm(workDir, { recursive: true, force: true });
+    await pushNewCommitToRemote(remoteDir, 'new.txt', 'add new', 'feature/new-branch');
 
     await service.fetch('test-repo');
 
@@ -297,16 +320,7 @@ describe('GitService - fetch', () => {
     const repoDir = paths.repoDir('test-repo');
 
     // リモートに新コミットを push
-    const workDir = path.join(tmpDir, 'work-for-sync');
-    await fs.mkdir(workDir, { recursive: true });
-    await execFileAsync('git', ['clone', remoteDir, '.'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
-    await fs.writeFile(path.join(workDir, 'sync.txt'), 'sync');
-    await execFileAsync('git', ['add', '.'], { cwd: workDir });
-    await execFileAsync('git', ['commit', '-m', 'sync commit'], { cwd: workDir });
-    await execFileAsync('git', ['push'], { cwd: workDir });
-    await fs.rm(workDir, { recursive: true, force: true });
+    await pushNewCommitToRemote(remoteDir, 'sync.txt', 'sync commit');
 
     // 再度 fetch（syncLocalBranches が実行される）
     await service.fetch('test-repo');
@@ -345,16 +359,7 @@ describe('GitService - fetch', () => {
     });
 
     // リモートにも新コミットを push
-    const workDir = path.join(tmpDir, 'work-for-diverge');
-    await fs.mkdir(workDir, { recursive: true });
-    await execFileAsync('git', ['clone', remoteDir, '.'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
-    await fs.writeFile(path.join(workDir, 'diverge.txt'), 'diverge');
-    await execFileAsync('git', ['add', '.'], { cwd: workDir });
-    await execFileAsync('git', ['commit', '-m', 'remote diverge commit'], { cwd: workDir });
-    await execFileAsync('git', ['push'], { cwd: workDir });
-    await fs.rm(workDir, { recursive: true, force: true });
+    await pushNewCommitToRemote(remoteDir, 'diverge.txt', 'remote diverge commit');
 
     // fetch 実行
     await service.fetch('test-repo');
@@ -389,16 +394,7 @@ describe('GitService - fetch', () => {
     });
 
     // リモートに新コミットを push
-    const workDir = path.join(tmpDir, 'work-for-worktree');
-    await fs.mkdir(workDir, { recursive: true });
-    await execFileAsync('git', ['clone', remoteDir, '.'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
-    await fs.writeFile(path.join(workDir, 'worktree-test.txt'), 'worktree');
-    await execFileAsync('git', ['add', '.'], { cwd: workDir });
-    await execFileAsync('git', ['commit', '-m', 'worktree test commit'], { cwd: workDir });
-    await execFileAsync('git', ['push'], { cwd: workDir });
-    await fs.rm(workDir, { recursive: true, force: true });
+    await pushNewCommitToRemote(remoteDir, 'worktree-test.txt', 'worktree test commit');
 
     // fetch 実行
     await service.fetch('test-repo');
@@ -562,17 +558,7 @@ describe('GitService - addWorktree (sourceBranch)', () => {
    * リモートに develop ブランチを追加するヘルパー
    */
   async function addDevelopBranch(): Promise<void> {
-    const workDir = path.join(tmpDir, 'work-for-develop');
-    await fs.mkdir(workDir, { recursive: true });
-    await execFileAsync('git', ['clone', remoteDir, '.'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.email', 'test@test.com'], { cwd: workDir });
-    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: workDir });
-    await execFileAsync('git', ['checkout', '-b', 'develop'], { cwd: workDir });
-    await fs.writeFile(path.join(workDir, 'develop.txt'), 'develop');
-    await execFileAsync('git', ['add', '.'], { cwd: workDir });
-    await execFileAsync('git', ['commit', '-m', 'add develop'], { cwd: workDir });
-    await execFileAsync('git', ['push', 'origin', 'develop'], { cwd: workDir });
-    await fs.rm(workDir, { recursive: true, force: true });
+    await pushNewCommitToRemote(remoteDir, 'develop.txt', 'add develop', 'develop');
   }
 
   it('sourceBranch 省略時は branch 自身が起点として使用される', async () => {
