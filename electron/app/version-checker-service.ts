@@ -8,7 +8,7 @@
  * - 定期チェック機能を提供
  */
 
-import { https } from 'node:https';
+import https from 'node:https';
 import { parse, compare } from 'semver';
 import type { App } from 'electron';
 
@@ -219,10 +219,10 @@ export class VersionCheckerService {
       };
 
       https
-        .get(url, options, (res) => {
+        .get(url, options, (res: any) => {
           let data = '';
 
-          res.on('data', (chunk) => {
+          res.on('data', (chunk: any) => {
             data += chunk;
           });
 
@@ -246,7 +246,7 @@ export class VersionCheckerService {
             }
           });
         })
-        .on('error', (err) => {
+        .on('error', (err: any) => {
           console.error('[VersionChecker] HTTPS request failed:', err);
           resolve(null);
         })

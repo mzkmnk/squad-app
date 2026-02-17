@@ -1,0 +1,64 @@
+<div class="update-notification">
+  <ng-container *ngIf="shouldShowBanner()">
+    <div
+      class="banner bg-blue-50 border-l-4 border-blue-500 p-4 shadow-sm"
+      role="alert"
+      aria-live="polite"
+    >
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <svg
+            class="h-5 w-5 text-blue-500 flex-shrink-0"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            aria-hidden="true"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 11-2 0 1 1 0 012 0z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-gray-900">
+              New version
+              <strong class="text-blue-600">{{ versionInfo?.latest }}</strong>
+              is available!
+            </p>
+            <p class="text-xs text-gray-600 mt-1">
+              Current version: <span class="font-mono text-gray-700">{{ versionInfo?.current }}</span>
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <a
+            [href]="versionInfo?.latestReleaseUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+            aria-label="Download new version"
+          >
+            <svg
+              class="h-4 w-4 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download
+          </a>
+          <button
+            (click)="dismiss()"
+            type="button"
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded transition-colors"
+            aria-label="Dismiss notification"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

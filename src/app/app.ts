@@ -22,6 +22,7 @@ import {
 import { HlmToasterImports } from '@spartan-ng/helm/sonner';
 import { ThemeService } from './services/theme.service';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
+import { UpdateNotificationComponent } from './components/update-notification.component';
 
 @Component({
   selector: 'app-root',
@@ -46,6 +47,7 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
     HlmSidebarTrigger,
     HlmSidebarWrapper,
     ThemeToggleComponent,
+    UpdateNotificationComponent,
     ...HlmIconImports,
     ...HlmToasterImports,
   ],
