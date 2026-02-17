@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, effect } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
@@ -20,6 +20,8 @@ import {
   HlmSidebarWrapper,
 } from '@spartan-ng/helm/sidebar';
 import { HlmToasterImports } from '@spartan-ng/helm/sonner';
+import { ThemeService } from './services/theme.service';
+import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-root',
@@ -43,9 +45,18 @@ import { HlmToasterImports } from '@spartan-ng/helm/sonner';
     HlmSidebarRail,
     HlmSidebarTrigger,
     HlmSidebarWrapper,
+    ThemeToggleComponent,
     ...HlmIconImports,
     ...HlmToasterImports,
   ],
   providers: [provideIcons({ lucideLayers, lucideGitFork, lucidePanelLeft, lucideSettings })],
 })
-export class App {}
+export class App {
+  constructor(private themeService: ThemeService) {
+    // Initialize theme service - effect will run automatically
+    effect(() => {
+      // Trigger effect by accessing the service's method
+      this.themeService.getCurrentTheme();
+    });
+  }
+}
