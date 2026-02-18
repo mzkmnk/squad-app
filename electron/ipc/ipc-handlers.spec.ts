@@ -107,6 +107,15 @@ function createMockDeps(): IpcHandlerDeps {
     ideDetector: {
       detectInstalledIdes: vi.fn().mockResolvedValue([]),
     },
+    versionChecker: {
+      checkForUpdates: vi.fn().mockResolvedValue({
+        current: '0.2.0',
+        latest: '0.2.0',
+        isUpdateAvailable: false,
+        latestReleaseUrl: 'https://github.com/m4i/squad-app/releases/tag/v0.2.0',
+        publishedAt: '2026-02-17T00:00:00Z',
+      }),
+    } as unknown as IpcHandlerDeps['versionChecker'],
   };
 }
 

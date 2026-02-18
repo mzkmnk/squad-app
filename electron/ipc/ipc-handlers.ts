@@ -16,6 +16,7 @@ import type {
   WorkspaceAddEntryRequest,
   WorkspaceRemoveEntryRequest,
   SettingsUpdateRequest,
+  VersionInfoResponse,
 } from './ipc-channels.js';
 import type { IpcResult } from '../types/ipc-result.js';
 import { mapErrorToIpcResult, notFoundResult, successResult } from './ipc-error-mapper.js';
@@ -28,6 +29,7 @@ import { settingsSchema } from '../types/models.js';
 import { IpcErrorCode } from '../types/ipc-error-code.js';
 import type { IdeDetectionResult } from '../ide/ide-detector.js';
 import { getIdeCommand, IDE_DEFINITIONS } from '../ide/ide-detector.js';
+import type { VersionCheckerService } from '../app/version-checker-service.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -102,6 +104,8 @@ export interface IpcHandlerDeps {
   ideDetector: {
     detectInstalledIdes: () => Promise<IdeDetectionResult[]>;
   };
+  /** バージョンチェッカーサービス */
+  versionChecker: VersionCheckerService;
 }
 
 /**
@@ -114,7 +118,30 @@ export interface IpcHandlerDeps {
  * @param deps - 依存オブジェクト（{@link IpcHandlerDeps}）
  */
 export function registerIpcHandlers(deps: IpcHandlerDeps): void {
-  const { store, gitService, codeWorkspaceService, paths } = deps;
+  const { store, gitService, codeWorkspaceService, paths, versionChecker } = deps;
+
+  // --- アプリケーション情報 ---
+
+  ipcMain.handle(IpcChannels.APP_VERSION, async (): Promise<IpcResult<VersionInfoResponse>> => {
+    try {
+      const versionInfo = await versionChecker.checkForUpdates();
+      return successResult(versionInfo);
+    } catch (error) {
+      return mapErrorToIpcResult(error);
+    }
+  });
+
+  ipcMain.handle(
+    IpcChannels.APP_CHECK_UPDATE,
+    async (): Promise<IpcResult<VersionInfoResponse>> => {
+      try {
+        const versionInfo = await versionChecker.checkForUpdates();
+        return successResult(versionInfo);
+      } catch (error) {
+        return mapErrorToIpcResult(error);
+      }
+    },
+  );
 
   // --- リポジトリ操作 ---
 

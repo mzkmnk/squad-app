@@ -8,5 +8,5 @@
     "strict": true
   },
   "include": ["**/*.ts"],
-  "exclude": ["types/electron-api.ts"]
+  "exclude": ["types/electron-api.ts", "**/*.spec.ts", "dist-electron"]
 }

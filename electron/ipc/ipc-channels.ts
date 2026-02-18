@@ -20,6 +20,13 @@ export const IpcChannels = {
   /** 疎通確認用 ping */
   PING: 'ping',
 
+  // アプリケーション情報
+
+  /** 現在のアプリケーションバージョン情報を取得する */
+  APP_VERSION: 'app:version',
+  /** 最新バージョンをチェックする */
+  APP_CHECK_UPDATE: 'app:check-update',
+
   // リポジトリ操作
 
   /** 登録済みリポジトリ一覧を取得する */
@@ -225,4 +232,25 @@ export interface WorkspaceRemoveEntryRequest {
   id: string;
   /** 削除対象のリポジトリ UUID の配列（複数一括対応） */
   repositoryIds: string[];
+}
+
+// --- アプリケーション情報レスポンス型 ---
+
+/**
+ * `app:version` および `app:check-update` チャネルのレスポンス。
+ *
+ * @remarks
+ * バージョン情報を含むオブジェクト。アップデート有無は `isUpdateAvailable` で判定する。
+ */
+export interface VersionInfoResponse {
+  /** 現在のアプリケーションバージョン（semver） */
+  current: string;
+  /** GitHub Releases から取得した最新バージョン（semver）、チェック前は current と同じ */
+  latest: string;
+  /** アップデートが利用可能かどうか */
+  isUpdateAvailable: boolean;
+  /** 最新リリースの GitHub URL */
+  latestReleaseUrl: string;
+  /** 最新リリースの公開日時（ISO 8601 形式） */
+  publishedAt: string;
 }

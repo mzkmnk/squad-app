@@ -10,7 +10,7 @@
 
 import type { Repository, Workspace, Settings, IdeDetectionResult } from './models';
 import type { IpcResult } from './ipc-result';
-import type { WorkspaceCreateEntry } from '../ipc/ipc-channels';
+import type { WorkspaceCreateEntry, VersionInfoResponse } from '../ipc/ipc-channels';
 
 /**
  * contextBridge.exposeInMainWorld で window.electronAPI に公開される API の型定義。
@@ -37,6 +37,22 @@ export interface ElectronAPI {
    * @returns メインプロセスからの応答文字列（通常 'pong'）
    */
   ping: () => Promise<string>;
+
+  // --- アプリケーション情報 ---
+
+  /**
+   * 現在のアプリケーションバージョン情報を取得する。
+   * キャッシュされた最新バージョン情報を返す（バックグラウンドで自動更新）。
+   * @returns バージョン情報を含む IpcResult
+   */
+  getVersion: () => Promise<IpcResult<VersionInfoResponse>>;
+
+  /**
+   * 最新バージョンをリアルタイムでチェックする。
+   * GitHub Releases API を呼び出して最新バージョン情報を取得し、ローカルにキャッシュする。
+   * @returns バージョン情報を含む IpcResult
+   */
+  checkForUpdate: () => Promise<IpcResult<VersionInfoResponse>>;
 
   // --- リポジトリ操作 ---
 

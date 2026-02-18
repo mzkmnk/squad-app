@@ -9,6 +9,7 @@ import { CodeWorkspaceService } from './git/code-workspace-service.js';
 import { registerIpcHandlers } from './ipc/ipc-handlers.js';
 import { detectInstalledIdes } from './ide/ide-detector.js';
 import { BackgroundFetchService } from './git/background-fetch-service.js';
+import { VersionCheckerService } from './app/version-checker-service.js';
 
 // macOS/Linux の GUI アプリではシェルの $PATH が継承されないため、
 // ログインシェルから完全な PATH を取得して process.env.PATH を修正する
@@ -18,6 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let mainWindow: BrowserWindow | null;
 let backgroundFetchService: BackgroundFetchService | null = null;
+let versionChecker: VersionCheckerService | null = null;
 
 async function initializeServices(): Promise<void> {
   const paths = createSquadPaths();
@@ -25,6 +27,12 @@ async function initializeServices(): Promise<void> {
   await store.initialize();
   const gitService = new GitService(paths);
   const codeWorkspaceService = new CodeWorkspaceService(paths);
+  versionChecker = new VersionCheckerService(
+    app,
+    process.env.GITHUB_OWNER || 'm4i',
+    process.env.GITHUB_REPO || 'squad-app',
+    process.env.GITHUB_TOKEN,
+  );
 
   registerIpcHandlers({
     store,
@@ -32,10 +40,15 @@ async function initializeServices(): Promise<void> {
     codeWorkspaceService,
     paths,
     ideDetector: { detectInstalledIdes },
+    versionChecker,
   });
 
+  // バックグラウンド fetch サービスを開始
   backgroundFetchService = new BackgroundFetchService(gitService, store);
   backgroundFetchService.start();
+
+  // バージョンチェック定期実行を開始（30分ごと）
+  versionChecker.startPeriodicCheck(30 * 60 * 1000);
 }
 
 function createWindow(): void {
@@ -79,6 +92,7 @@ app.on('ready', () => {
 
 app.on('before-quit', () => {
   backgroundFetchService?.stop();
+  versionChecker?.stopPeriodicCheck();
 });
 
 app.on('window-all-closed', () => {
